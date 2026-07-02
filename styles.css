@@ -2461,4 +2461,14 @@ body:not(.dark-mode) .check-row.done span:not(.pill) {
     color: #94a3b8;
     letter-spacing: 1px;
     opacity: 0.85;
+
+  .hero-powered{
+    margin:8px 0 20px;
+    font-size:14px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#cfd8dc;
+    opacity:.85;
+    font-weight:600;
 }
+
