@@ -330,24 +330,37 @@ function normalizeState(value = {}) {
     focusDays: parsed.focusDays || defaultState.focusDays,
     weakTopics: parsed.weakTopics || defaultState.weakTopics,
     resolvedWeakTopics: parsed.resolvedWeakTopics || defaultState.resolvedWeakTopics,
-    timetable: (parsed.timetable || defaultState.timetable).map((plan) => ({
-      done: false,
-      login: "",
-      logoff: "",
-      archived: false,
-      canceled: false,
-      cancelReason: "",
-      breaks: [],
-      ...plan,
-      breaks: Array.isArray(plan.breaks) ? plan.breaks : [],
-      date: plan.date || dateForWeekday(plan.day),
-      time: normalizePlanTime(plan.time),
-      task: normalizePlanTask(plan.task, plan.time)
-    })),
+    timetable: normalizeTimetable(parsed.timetable || defaultState.timetable),
     syllabusDone: { ...defaultState.syllabusDone, ...(parsed.syllabusDone || {}) },
     doctorPath: { ...defaultState.doctorPath, ...(parsed.doctorPath || {}) },
     updatedAt: parsed.updatedAt || new Date().toISOString()
   };
+}
+
+function normalizeTimetable(plans = []) {
+  return plans
+    .filter((plan) => !plan.rescheduledFrom)
+    .map((plan) => {
+      const wasAutoRescheduled = Boolean(plan.autoRescheduled || plan.rescheduledTo);
+      return {
+        done: false,
+        login: "",
+        logoff: "",
+        archived: false,
+        canceled: false,
+        cancelReason: "",
+        breaks: [],
+        ...plan,
+        canceled: wasAutoRescheduled ? false : Boolean(plan.canceled),
+        cancelReason: wasAutoRescheduled ? "" : (plan.cancelReason || ""),
+        autoRescheduled: false,
+        rescheduledTo: "",
+        breaks: Array.isArray(plan.breaks) ? plan.breaks : [],
+        date: plan.date || dateForWeekday(plan.day),
+        time: normalizePlanTime(plan.time),
+        task: normalizePlanTask(plan.task, plan.time)
+      };
+    });
 }
 
 function normalizeMock(mock = {}) {
@@ -710,7 +723,6 @@ function formatHours(hours) {
 }
 
 function render() {
-  autoRescheduleMissedPlans();
   renderTheme();
   renderNotificationSettings();
   renderSyncStatus();
@@ -1228,9 +1240,6 @@ function renderTimetable() {
 }
 
 function renderPlanActions(row) {
-  if (row.autoRescheduled) {
-    return `<button class="text-button" type="button" data-plan-edit="${row.id}">Edit</button>`;
-  }
   return `
     <button class="text-button" type="button" data-plan-login="${row.id}" ${row.canceled ? "disabled" : ""}>${row.login ? "Update In" : "Log In"}</button>
     <button class="text-button" type="button" data-plan-logoff="${row.id}" ${row.canceled ? "disabled" : ""}>${row.logoff ? "Update Out" : "Log Off"}</button>
@@ -1336,51 +1345,6 @@ function addDays(dateValue, offset) {
   return date.toISOString().slice(0, 10);
 }
 
-function autoRescheduleMissedPlans() {
-  const missedPlans = state.timetable.filter((plan) => shouldAutoReschedulePlan(plan));
-  if (!missedPlans.length) return;
-
-  missedPlans.forEach((plan) => {
-    const slot = findBestAvailableSlot(plan);
-    const recoveryId = crypto.randomUUID();
-    state.timetable.push({
-      ...plan,
-      id: recoveryId,
-      date: slot.date,
-      time: slot.time,
-      task: plan.task.startsWith("Recovery:") ? plan.task : `Recovery: ${plan.task}`,
-      done: false,
-      login: "",
-      logoff: "",
-      canceled: false,
-      cancelReason: "",
-      canceledAt: "",
-      breaks: [],
-      rescheduledFrom: plan.id,
-      autoRescheduled: false
-    });
-
-    state.timetable = state.timetable.map((item) => item.id === plan.id ? {
-      ...item,
-      canceled: true,
-      autoRescheduled: true,
-      rescheduledTo: recoveryId,
-      cancelReason: `Auto-rescheduled to ${slot.date} ${slot.time}`,
-      canceledAt: new Date().toISOString()
-    } : item);
-  });
-}
-
-function shouldAutoReschedulePlan(plan) {
-  if (plan.done || plan.canceled || plan.login || plan.rescheduledTo || plan.autoRescheduled) return false;
-  return isPlanPastMissWindow(plan);
-}
-
-function isPlanPastMissWindow(plan) {
-  const planTime = new Date(`${plan.date}T${plan.time}:00`).getTime();
-  return Date.now() > planTime + (30 * 60000);
-}
-
 function findBestAvailableSlot(plan = {}) {
   const preferredTimes = ["06:00", "09:00", "14:45", "17:00", "19:45", "22:05"];
   const searchStart = plan.preferredDate || (plan.date > todayKey() ? plan.date : todayKey());
@@ -1449,7 +1413,6 @@ function getPlanTimingClass(row) {
 }
 
 function getPlanStateLabel(row) {
-  if (row.autoRescheduled) return "Auto Rescheduled";
   if (row.canceled) return "🔴 Mission Aborted";
   if (hasActivePlanBreak(row)) return "🟡 Mission Paused";
   if (row.done) return "🟢 Mission Accomplished";
@@ -1461,7 +1424,6 @@ function getPlanStateLabel(row) {
 }
 
 function getPlanTimingText(row) {
-  if (row.autoRescheduled) return row.cancelReason || "Auto-rescheduled to recovery queue";
   if (row.canceled) return `Canceled - ${row.cancelReason || "No reason saved"}`;
   if (isMissedPlan(row)) return "Missed - no log in";
   if (isLatePendingPlan(row)) return "Late - log in now";
