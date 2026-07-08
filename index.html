@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/png" href="assets/icon-192.png" />
     <link rel="apple-touch-icon" href="assets/icon-192.png" />
-    <link rel="stylesheet" href="styles.css?v=21" />
+    <link rel="stylesheet" href="styles.css?v=23" />
   </head>
   <body>
     <aside class="mission-sidebar" aria-label="Dashboard navigation">
@@ -42,8 +42,7 @@
           <img class="brand-logo" src="assets/logo.png" alt="Project Prime Invictus Ignis logo" />
           <p class="eyebrow">Good Morning, Noel</p>
           <h1>PROJECT PRIME: INVICTUS IGNIS</h1>
-          < <strong> POWERED BY MEDMISSION ALPHA</ 
-          strong>
+          <p class="hero-powered">Powered by <strong>MEDMISSION ALPHA</strong></p>
           <p class="hero-tagline">Rise unconquered. Burn relentlessly. Heal compassionately.</p>
           <p class="hero-copy">
             Today is not a tracker entry. It is a mission block for the future doctor you are becoming.
@@ -405,8 +404,22 @@
             </div>
           </div>
           <form id="mockForm" class="score-form">
-            <input id="mockScore" type="number" min="0" max="720" placeholder="Score / 720" required />
+            <select id="mockTotal">
+              <option value="720">720 marks</option>
+              <option value="360">360 marks</option>
+              <option value="180">180 marks</option>
+            </select>
+            <input id="mockScore" type="number" min="0" max="720" placeholder="Score" required />
             <input id="mockMistakes" type="number" min="0" max="180" placeholder="Mistakes" />
+            <select id="mockMistakeType">
+              <option>Mixed mistakes</option>
+              <option>Concept gap</option>
+              <option>NCERT missed</option>
+              <option>Calculation</option>
+              <option>Silly mistake</option>
+              <option>Time pressure</option>
+            </select>
+            <input id="mockWeakArea" type="text" maxlength="70" placeholder="Weak area" />
             <button type="submit">Add</button>
           </form>
           <div class="chart" id="mockChart" aria-label="Mock test score chart"></div>
@@ -507,7 +520,6 @@
       </div>
     </div>
 
-    <script type="module" src="app.js?v=19"></script>
+    <script type="module" src="app.js?v=23"></script>
   </body>
 </html>
-

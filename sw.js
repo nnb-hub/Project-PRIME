@@ -1,9 +1,9 @@
-const CACHE_NAME = "project-prime-invictus-ignis-v19";
+const CACHE_NAME = "project-prime-invictus-ignis-v23";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=19",
-  "./app.js?v=19",
+  "./styles.css?v=23",
+  "./app.js?v=23",
   "./manifest.webmanifest",
   "./assets/logo.png",
   "./assets/icon-192.png",
@@ -28,6 +28,24 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const requestUrl = new URL(event.request.url);
+  const isFreshAsset =
+    event.request.mode === "navigate" ||
+    [".html", ".css", ".js"].some((extension) => requestUrl.pathname.endsWith(extension));
+
+  if (isFreshAsset) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match("./index.html")))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;

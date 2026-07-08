@@ -38,8 +38,8 @@ const defaultState = {
     breaks: []
   },
   mocks: [
-    { id: crypto.randomUUID(), score: 520, mistakes: 42, date: todayKey(-14) },
-    { id: crypto.randomUUID(), score: 548, mistakes: 35, date: todayKey(-7) }
+    { id: crypto.randomUUID(), score: 520, total: 720, mistakes: 42, mistakeType: "Mixed mistakes", weakArea: "Full syllabus", date: todayKey(-14) },
+    { id: crypto.randomUUID(), score: 548, total: 720, mistakes: 35, mistakeType: "Mixed mistakes", weakArea: "Full syllabus", date: todayKey(-7) }
   ],
   revisions: [
     { id: crypto.randomUUID(), text: "Human Physiology formulas", date: todayKey(1) },
@@ -57,7 +57,7 @@ const defaultState = {
   resolvedWeakTopics: [],
   syllabusDone: {},
   doctorPath: {
-    targetScore: "650+",
+    targetScore: "700",
     targetCollege: "MBBS 2027",
     note: "Learn Deeply. Heal Faithfully. Serve Globally."
   }
@@ -217,8 +217,11 @@ const els = {
   sessionFocus: document.querySelector("#sessionFocus"),
   sessionList: document.querySelector("#sessionList"),
   mockForm: document.querySelector("#mockForm"),
+  mockTotal: document.querySelector("#mockTotal"),
   mockScore: document.querySelector("#mockScore"),
   mockMistakes: document.querySelector("#mockMistakes"),
+  mockMistakeType: document.querySelector("#mockMistakeType"),
+  mockWeakArea: document.querySelector("#mockWeakArea"),
   mockChart: document.querySelector("#mockChart"),
   mockList: document.querySelector("#mockList"),
   revisionForm: document.querySelector("#revisionForm"),
@@ -322,8 +325,8 @@ function normalizeState(value = {}) {
     goals: parsed.goals || defaultState.goals,
     sessions: parsed.sessions || defaultState.sessions,
     liveSession: normalizeLiveSession(parsed.liveSession),
-    mocks: parsed.mocks || defaultState.mocks,
-    revisions: parsed.revisions || defaultState.revisions,
+    mocks: (parsed.mocks || defaultState.mocks).map(normalizeMock),
+    revisions: (parsed.revisions || defaultState.revisions).map(normalizeRevision),
     focusDays: parsed.focusDays || defaultState.focusDays,
     weakTopics: parsed.weakTopics || defaultState.weakTopics,
     resolvedWeakTopics: parsed.resolvedWeakTopics || defaultState.resolvedWeakTopics,
@@ -344,6 +347,28 @@ function normalizeState(value = {}) {
     syllabusDone: { ...defaultState.syllabusDone, ...(parsed.syllabusDone || {}) },
     doctorPath: { ...defaultState.doctorPath, ...(parsed.doctorPath || {}) },
     updatedAt: parsed.updatedAt || new Date().toISOString()
+  };
+}
+
+function normalizeMock(mock = {}) {
+  const total = [180, 360, 720].includes(Number(mock.total)) ? Number(mock.total) : 720;
+  return {
+    ...mock,
+    total,
+    score: Math.max(0, Math.min(total, Number(mock.score || 0))),
+    mistakes: Math.max(0, Number(mock.mistakes || 0)),
+    mistakeType: mock.mistakeType || "Mixed mistakes",
+    weakArea: mock.weakArea || ""
+  };
+}
+
+function normalizeRevision(revision = {}) {
+  return {
+    ...revision,
+    text: revision.text || "Revision",
+    date: revision.date || todayKey(),
+    stage: revision.stage || "",
+    source: revision.source || "manual"
   };
 }
 
@@ -685,6 +710,7 @@ function formatHours(hours) {
 }
 
 function render() {
+  autoRescheduleMissedPlans();
   renderTheme();
   renderNotificationSettings();
   renderSyncStatus();
@@ -748,7 +774,7 @@ function renderStats() {
   const streak = getGoalStreak();
 
   const avg = state.mocks.length
-    ? Math.round(state.mocks.reduce((sum, mock) => sum + Number(mock.score), 0) / state.mocks.length)
+    ? Math.round(state.mocks.reduce((sum, mock) => sum + getMockProjectedScore(mock), 0) / state.mocks.length)
     : 0;
 
   els.todayHours.textContent = formatHours(todayHours);
@@ -1112,27 +1138,39 @@ function renderMocks() {
   const latest = [...state.mocks].slice(-6);
   els.mockChart.innerHTML = latest.length
     ? latest.map((mock) => {
-      const height = Math.max(8, Math.round((mock.score / 720) * 100));
-      return `<div class="bar" style="height:${height}%"><span>${mock.score}</span></div>`;
+      const percent = getMockPercent(mock);
+      const height = Math.max(8, percent);
+      return `<div class="bar" style="height:${height}%"><span>${percent}%</span></div>`;
     }).join("")
     : `<span>No scores yet</span>`;
 
-  els.mockList.innerHTML = [...state.mocks].slice(-3).reverse().map((mock) => `
+  els.mockList.innerHTML = [...state.mocks].slice(-5).reverse().map((mock) => `
     <div class="mini-item">
       <span>
-        ${mock.score}/720
-        <small>${mock.mistakes || 0} mistakes - ${mock.date}</small>
+        ${mock.score}/${mock.total || 720} - ${getMockPercent(mock)}%
+        <small>${getMockProjectedScore(mock)}/720 projection - ${mock.mistakes || 0} mistakes - ${escapeHtml(mock.mistakeType || "Mixed mistakes")} - ${escapeHtml(mock.weakArea || "No weak area saved")} - ${mock.date}</small>
       </span>
       <button class="text-button" type="button" data-mock-delete="${mock.id}">Remove</button>
     </div>
   `).join("");
 }
 
+function getMockPercent(mock) {
+  const total = Number(mock.total || 720);
+  if (!total) return 0;
+  return Math.max(0, Math.min(100, Math.round((Number(mock.score || 0) / total) * 100)));
+}
+
+function getMockProjectedScore(mock) {
+  return Math.round((getMockPercent(mock) / 100) * 720);
+}
+
 function renderRevisions() {
-  els.revisionList.innerHTML = state.revisions.length
-    ? state.revisions.map((revision) => `
+  const revisions = [...state.revisions].sort((a, b) => a.date.localeCompare(b.date));
+  els.revisionList.innerHTML = revisions.length
+    ? revisions.map((revision) => `
       <div class="mini-item">
-        <span>${escapeHtml(revision.text)}<small>Queued ${revision.date}</small></span>
+        <span>${escapeHtml(revision.text)}<small>${revision.stage ? `Stage ${escapeHtml(revision.stage)} - ` : ""}Queued ${revision.date}</small></span>
         <button class="text-button" type="button" data-revision-delete="${revision.id}">Done</button>
       </div>
     `).join("")
@@ -1190,6 +1228,9 @@ function renderTimetable() {
 }
 
 function renderPlanActions(row) {
+  if (row.autoRescheduled) {
+    return `<button class="text-button" type="button" data-plan-edit="${row.id}">Edit</button>`;
+  }
   return `
     <button class="text-button" type="button" data-plan-login="${row.id}" ${row.canceled ? "disabled" : ""}>${row.login ? "Update In" : "Log In"}</button>
     <button class="text-button" type="button" data-plan-logoff="${row.id}" ${row.canceled ? "disabled" : ""}>${row.logoff ? "Update Out" : "Log Off"}</button>
@@ -1295,6 +1336,77 @@ function addDays(dateValue, offset) {
   return date.toISOString().slice(0, 10);
 }
 
+function autoRescheduleMissedPlans() {
+  const missedPlans = state.timetable.filter((plan) => shouldAutoReschedulePlan(plan));
+  if (!missedPlans.length) return;
+
+  missedPlans.forEach((plan) => {
+    const slot = findBestAvailableSlot(plan);
+    const recoveryId = crypto.randomUUID();
+    state.timetable.push({
+      ...plan,
+      id: recoveryId,
+      date: slot.date,
+      time: slot.time,
+      task: plan.task.startsWith("Recovery:") ? plan.task : `Recovery: ${plan.task}`,
+      done: false,
+      login: "",
+      logoff: "",
+      canceled: false,
+      cancelReason: "",
+      canceledAt: "",
+      breaks: [],
+      rescheduledFrom: plan.id,
+      autoRescheduled: false
+    });
+
+    state.timetable = state.timetable.map((item) => item.id === plan.id ? {
+      ...item,
+      canceled: true,
+      autoRescheduled: true,
+      rescheduledTo: recoveryId,
+      cancelReason: `Auto-rescheduled to ${slot.date} ${slot.time}`,
+      canceledAt: new Date().toISOString()
+    } : item);
+  });
+}
+
+function shouldAutoReschedulePlan(plan) {
+  if (plan.done || plan.canceled || plan.login || plan.rescheduledTo || plan.autoRescheduled) return false;
+  return isPlanPastMissWindow(plan);
+}
+
+function isPlanPastMissWindow(plan) {
+  const planTime = new Date(`${plan.date}T${plan.time}:00`).getTime();
+  return Date.now() > planTime + (30 * 60000);
+}
+
+function findBestAvailableSlot(plan = {}) {
+  const preferredTimes = ["06:00", "09:00", "14:45", "17:00", "19:45", "22:05"];
+  const searchStart = plan.preferredDate || (plan.date > todayKey() ? plan.date : todayKey());
+
+  for (let dayOffset = 0; dayOffset < 14; dayOffset += 1) {
+    const date = addDays(searchStart, dayOffset);
+    for (const time of preferredTimes) {
+      const candidate = { date, time };
+      const candidateMs = new Date(`${date}T${time}:00`).getTime();
+      if (candidateMs <= Date.now() + (45 * 60000)) continue;
+      if (isSlotAvailable(candidate, plan.id)) return candidate;
+    }
+  }
+
+  return { date: addDays(searchStart, 14), time: "06:00" };
+}
+
+function isSlotAvailable(candidate, ignoredId = "") {
+  const candidateMinutes = timeToMinutes(candidate.time);
+  return !state.timetable.some((plan) => {
+    if (plan.id === ignoredId || plan.canceled || plan.archived) return false;
+    if (plan.date !== candidate.date) return false;
+    return Math.abs(timeToMinutes(plan.time) - candidateMinutes) < 90;
+  });
+}
+
 function formatPlanDate(date) {
   const label = date === todayKey() ? "Today" : new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
     weekday: "long",
@@ -1337,6 +1449,7 @@ function getPlanTimingClass(row) {
 }
 
 function getPlanStateLabel(row) {
+  if (row.autoRescheduled) return "Auto Rescheduled";
   if (row.canceled) return "🔴 Mission Aborted";
   if (hasActivePlanBreak(row)) return "🟡 Mission Paused";
   if (row.done) return "🟢 Mission Accomplished";
@@ -1348,6 +1461,7 @@ function getPlanStateLabel(row) {
 }
 
 function getPlanTimingText(row) {
+  if (row.autoRescheduled) return row.cancelReason || "Auto-rescheduled to recovery queue";
   if (row.canceled) return `Canceled - ${row.cancelReason || "No reason saved"}`;
   if (isMissedPlan(row)) return "Missed - no log in";
   if (isLatePendingPlan(row)) return "Late - log in now";
@@ -1604,7 +1718,8 @@ function updateNotificationStatus() {
 async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   try {
-    await navigator.serviceWorker.register("sw.js");
+    const registration = await navigator.serviceWorker.register("sw.js");
+    registration.update();
   } catch {
     els.notificationStatus.textContent = "Offline mode could not start in this browser.";
   }
@@ -2092,15 +2207,27 @@ els.sessionList.addEventListener("click", async (event) => {
 
 els.mockForm.addEventListener("submit", (event) => {
   event.preventDefault();
+  const total = Number(els.mockTotal.value || 720);
+  const score = Math.max(0, Math.min(total, Number(els.mockScore.value || 0)));
   state.mocks.push({
     id: crypto.randomUUID(),
-    score: Number(els.mockScore.value),
+    score,
+    total,
     mistakes: Number(els.mockMistakes.value || 0),
+    mistakeType: els.mockMistakeType.value,
+    weakArea: els.mockWeakArea.value.trim(),
     date: todayKey()
   });
   els.mockScore.value = "";
   els.mockMistakes.value = "";
+  els.mockWeakArea.value = "";
   render();
+});
+
+els.mockTotal?.addEventListener("change", () => {
+  const total = Number(els.mockTotal.value || 720);
+  els.mockScore.max = String(total);
+  els.mockScore.placeholder = `Score / ${total}`;
 });
 
 els.mockList.addEventListener("click", (event) => {
@@ -2112,9 +2239,10 @@ els.mockList.addEventListener("click", (event) => {
 
 els.revisionForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  state.revisions.push({ id: crypto.randomUUID(), text: els.revisionInput.value.trim(), date: todayKey() });
+  addSpacedRevision(els.revisionInput.value.trim());
   els.revisionInput.value = "";
   render();
+  scheduleStudyNotifications();
 });
 
 els.revisionList.addEventListener("click", (event) => {
@@ -2123,6 +2251,45 @@ els.revisionList.addEventListener("click", (event) => {
   state.revisions = state.revisions.filter((revision) => revision.id !== id);
   render();
 });
+
+function addSpacedRevision(text) {
+  if (!text) return;
+  const schedule = [
+    { offset: 1, stage: "D1" },
+    { offset: 3, stage: "D3" },
+    { offset: 7, stage: "D7" },
+    { offset: 15, stage: "D15" },
+    { offset: 30, stage: "D30" }
+  ];
+
+  schedule.forEach(({ offset, stage }) => {
+    const date = todayKey(offset);
+    const revisionId = crypto.randomUUID();
+    state.revisions.push({
+      id: revisionId,
+      text,
+      date,
+      stage,
+      source: "spaced"
+    });
+
+    const slot = findBestAvailableSlot({ id: revisionId, date, time: "06:00" });
+    state.timetable.push({
+      id: crypto.randomUUID(),
+      date: slot.date,
+      time: slot.time,
+      subject: "Revision",
+      task: `${stage}: ${text}`,
+      done: false,
+      login: "",
+      logoff: "",
+      canceled: false,
+      cancelReason: "",
+      breaks: [],
+      revisionId
+    });
+  });
+}
 
 els.timetableForm.addEventListener("submit", (event) => {
   event.preventDefault();
