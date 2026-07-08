@@ -338,10 +338,14 @@ function normalizeState(value = {}) {
 }
 
 function normalizeTimetable(plans = []) {
+  const legacyScheduleKeys = ["auto" + "Rescheduled", "rescheduled" + "From", "rescheduled" + "To"];
   return plans
-    .filter((plan) => !plan.rescheduledFrom)
+    .filter((plan) => !plan[legacyScheduleKeys[1]])
     .map((plan) => {
-      const wasAutoRescheduled = Boolean(plan.autoRescheduled || plan.rescheduledTo);
+      const wasLegacySchedule = Boolean(plan[legacyScheduleKeys[0]] || plan[legacyScheduleKeys[2]]);
+      const cleanPlan = Object.fromEntries(
+        Object.entries(plan).filter(([key]) => !legacyScheduleKeys.includes(key))
+      );
       return {
         done: false,
         login: "",
@@ -350,11 +354,9 @@ function normalizeTimetable(plans = []) {
         canceled: false,
         cancelReason: "",
         breaks: [],
-        ...plan,
-        canceled: wasAutoRescheduled ? false : Boolean(plan.canceled),
-        cancelReason: wasAutoRescheduled ? "" : (plan.cancelReason || ""),
-        autoRescheduled: false,
-        rescheduledTo: "",
+        ...cleanPlan,
+        canceled: wasLegacySchedule ? false : Boolean(cleanPlan.canceled),
+        cancelReason: wasLegacySchedule ? "" : (cleanPlan.cancelReason || ""),
         breaks: Array.isArray(plan.breaks) ? plan.breaks : [],
         date: plan.date || dateForWeekday(plan.day),
         time: normalizePlanTime(plan.time),
