@@ -132,6 +132,13 @@ const defaultNotificationSettings = {
 const breakReasonOptions = ["Washroom", "Burnout", "Water", "Meal", "Stretch", "Other"];
 const breakDurationOptions = [5, 10, 15, 20, 30];
 const cancelReasonOptions = ["Burnout", "Sick", "Family", "Emergency", "Reschedule", "Other"];
+const revisionSchedule = [
+  { offset: 1, stage: "D1" },
+  { offset: 3, stage: "D3" },
+  { offset: 7, stage: "D7" },
+  { offset: 15, stage: "D15" },
+  { offset: 30, stage: "D30" }
+];
 
 let state = loadState();
 let syncMeta = loadSyncMeta();
@@ -2240,46 +2247,58 @@ els.revisionForm.addEventListener("submit", (event) => {
 els.revisionList.addEventListener("click", (event) => {
   const id = event.target.dataset.revisionDelete;
   if (!id) return;
+  const completedRevision = state.revisions.find((revision) => revision.id === id);
   state.revisions = state.revisions.filter((revision) => revision.id !== id);
+  state.timetable = state.timetable.map((plan) => plan.revisionId === id && !plan.canceled ? { ...plan, done: true } : plan);
+  scheduleNextRevision(completedRevision);
   render();
+  scheduleStudyNotifications();
 });
 
 function addSpacedRevision(text) {
   if (!text) return;
-  const schedule = [
-    { offset: 1, stage: "D1" },
-    { offset: 3, stage: "D3" },
-    { offset: 7, stage: "D7" },
-    { offset: 15, stage: "D15" },
-    { offset: 30, stage: "D30" }
-  ];
+  scheduleRevisionStage(text, revisionSchedule[0]);
+}
 
-  schedule.forEach(({ offset, stage }) => {
-    const date = todayKey(offset);
-    const revisionId = crypto.randomUUID();
-    state.revisions.push({
-      id: revisionId,
-      text,
-      date,
-      stage,
-      source: "spaced"
-    });
+function scheduleNextRevision(completedRevision) {
+  if (!completedRevision?.text) return;
+  const currentIndex = revisionSchedule.findIndex((item) => item.stage === completedRevision.stage);
+  if (currentIndex < 0) return;
+  const nextStage = revisionSchedule[currentIndex + 1];
+  if (!nextStage) return;
+  scheduleRevisionStage(completedRevision.text, nextStage);
+}
 
-    const slot = findBestAvailableSlot({ id: revisionId, date, time: "06:00" });
-    state.timetable.push({
-      id: crypto.randomUUID(),
-      date: slot.date,
-      time: slot.time,
-      subject: "Revision",
-      task: `${stage}: ${text}`,
-      done: false,
-      login: "",
-      logoff: "",
-      canceled: false,
-      cancelReason: "",
-      breaks: [],
-      revisionId
-    });
+function scheduleRevisionStage(text, scheduleItem) {
+  if (!text || !scheduleItem) return;
+  const alreadyQueued = state.revisions.some((revision) => revision.text === text && revision.stage === scheduleItem.stage);
+  const alreadyPlanned = state.timetable.some((plan) => plan.subject === "Revision" && plan.task === `${scheduleItem.stage}: ${text}` && !plan.done && !plan.archived && !plan.canceled);
+  if (alreadyQueued || alreadyPlanned) return;
+
+  const date = todayKey(scheduleItem.offset);
+  const revisionId = crypto.randomUUID();
+  state.revisions.push({
+    id: revisionId,
+    text,
+    date,
+    stage: scheduleItem.stage,
+    source: "spaced"
+  });
+
+  const slot = findBestAvailableSlot({ id: revisionId, date, time: "06:00" });
+  state.timetable.push({
+    id: crypto.randomUUID(),
+    date: slot.date,
+    time: slot.time,
+    subject: "Revision",
+    task: `${scheduleItem.stage}: ${text}`,
+    done: false,
+    login: "",
+    logoff: "",
+    canceled: false,
+    cancelReason: "",
+    breaks: [],
+    revisionId
   });
 }
 
