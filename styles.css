@@ -861,6 +861,63 @@ body:not(.dark-mode) input::placeholder {
   color: var(--muted);
 }
 
+.revision-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+}
+
+.revision-main {
+  min-width: 0;
+}
+
+.revision-main strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 0.98rem;
+}
+
+.revision-main small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.revision-stage {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid color-mix(in srgb, var(--revision) 45%, var(--line));
+  border-radius: 7px;
+  color: var(--revision);
+  background: color-mix(in srgb, var(--revision) 12%, transparent);
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.revision-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.revision-actions button {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
 #weakList .mini-item {
   grid-template-columns: minmax(0, 1fr) auto auto;
 }
@@ -2481,6 +2538,20 @@ body:not(.dark-mode) .check-row.done span:not(.pill) {
     justify-self: start;
   }
 
+  .revision-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .revision-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .revision-actions button {
+    flex: 1;
+  }
+
   .subject-actions {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -2510,6 +2581,20 @@ body:not(.dark-mode) .check-row.done span:not(.pill) {
   .check-row .pill {
     grid-column: 2;
     justify-self: start;
+  }
+
+  .revision-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .revision-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .revision-actions button {
+    flex: 1;
   }
 }
 

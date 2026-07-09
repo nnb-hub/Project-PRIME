@@ -1202,9 +1202,16 @@ function renderRevisions() {
   const revisions = [...state.revisions].sort((a, b) => a.date.localeCompare(b.date));
   els.revisionList.innerHTML = revisions.length
     ? revisions.map((revision) => `
-      <div class="mini-item">
-        <span>${escapeHtml(revision.text)}<small>${revision.stage ? `Stage ${escapeHtml(revision.stage)} - ` : ""}Queued ${revision.date}</small></span>
-        <button class="text-button" type="button" data-revision-delete="${revision.id}">Done</button>
+      <div class="revision-item">
+        <div class="revision-main">
+          <strong>${escapeHtml(revision.text)}</strong>
+          <small>${revision.stage ? `Stage ${escapeHtml(revision.stage)} - ` : ""}Queued ${revision.date}</small>
+        </div>
+        ${revision.stage ? `<span class="revision-stage">${escapeHtml(revision.stage)}</span>` : ""}
+        <div class="revision-actions">
+          <button class="secondary-button" type="button" data-revision-done="${revision.id}">Done</button>
+          <button class="text-button danger-button" type="button" data-revision-delete="${revision.id}">Delete</button>
+        </div>
       </div>
     `).join("")
     : `<div class="mini-item"><span>Revision queue is clear.</span></div>`;
@@ -2245,12 +2252,24 @@ els.revisionForm.addEventListener("submit", (event) => {
 });
 
 els.revisionList.addEventListener("click", (event) => {
-  const id = event.target.dataset.revisionDelete;
-  if (!id) return;
+  const doneId = event.target.dataset.revisionDone;
+  const deleteId = event.target.dataset.revisionDelete;
+  if (!doneId && !deleteId) return;
+
+  const id = doneId || deleteId;
   const completedRevision = state.revisions.find((revision) => revision.id === id);
   state.revisions = state.revisions.filter((revision) => revision.id !== id);
-  state.timetable = state.timetable.map((plan) => plan.revisionId === id && !plan.canceled ? { ...plan, done: true } : plan);
+
+  if (doneId) {
+    state.timetable = state.timetable.map((plan) => plan.revisionId === id && !plan.canceled ? { ...plan, done: true } : plan);
+  } else {
+    state.timetable = state.timetable.filter((plan) => plan.revisionId !== id);
+  }
+
+  if (doneId) {
   scheduleNextRevision(completedRevision);
+  }
+
   render();
   scheduleStudyNotifications();
 });
