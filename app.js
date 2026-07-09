@@ -51,6 +51,7 @@ const defaultState = {
     { id: crypto.randomUUID(), date: todayKey(1), time: "09:00", subject: "Mock Test", task: "Full syllabus test + analysis", done: false, login: "", logoff: "" }
   ],
   focusDays: [],
+  manualBacklogCount: null,
   weakTopics: [
     { id: crypto.randomUUID(), subject: "Physics", topic: "Rotational Motion", priority: "High", action: "Redo marked questions" }
   ],
@@ -162,6 +163,8 @@ const els = {
   readinessScore: document.querySelector("#readinessScore"),
   dashboardMissionDay: document.querySelector("#dashboardMissionDay"),
   dashboardBacklogCount: document.querySelector("#dashboardBacklogCount"),
+  backlogCoveredBtn: document.querySelector("#backlogCoveredBtn"),
+  editBacklogBtn: document.querySelector("#editBacklogBtn"),
   dashboardDailyCompletion: document.querySelector("#dashboardDailyCompletion"),
   dashboardCurrentFocus: document.querySelector("#dashboardCurrentFocus"),
   dashboardMainSubject: document.querySelector("#dashboardMainSubject"),
@@ -328,6 +331,7 @@ function normalizeState(value = {}) {
     mocks: (parsed.mocks || defaultState.mocks).map(normalizeMock),
     revisions: (parsed.revisions || defaultState.revisions).map(normalizeRevision),
     focusDays: parsed.focusDays || defaultState.focusDays,
+    manualBacklogCount: Number.isFinite(Number(parsed.manualBacklogCount)) ? Math.max(0, Math.round(Number(parsed.manualBacklogCount))) : null,
     weakTopics: parsed.weakTopics || defaultState.weakTopics,
     resolvedWeakTopics: parsed.resolvedWeakTopics || defaultState.resolvedWeakTopics,
     timetable: normalizeTimetable(parsed.timetable || defaultState.timetable),
@@ -813,6 +817,7 @@ function renderStats() {
   const missionDay = getMissionDay();
   if (els.dashboardMissionDay) els.dashboardMissionDay.textContent = missionDay;
   if (els.dashboardBacklogCount) els.dashboardBacklogCount.textContent = backlogCount;
+  if (els.backlogCoveredBtn) els.backlogCoveredBtn.disabled = backlogCount <= 0;
   if (els.dashboardDailyCompletion) els.dashboardDailyCompletion.textContent = `${dailyCompletion}%`;
   if (els.dashboardCurrentFocus) els.dashboardCurrentFocus.textContent = activePlan?.task || "Set mission";
   if (els.dashboardMainSubject) els.dashboardMainSubject.textContent = activePlan?.subject || "Not set";
@@ -830,6 +835,13 @@ function getMissionDay() {
 }
 
 function getBacklogCount() {
+  if (Number.isFinite(Number(state.manualBacklogCount))) {
+    return Math.max(0, Math.round(Number(state.manualBacklogCount)));
+  }
+  return getAutoBacklogCount();
+}
+
+function getAutoBacklogCount() {
   return state.timetable.filter((plan) => !plan.archived && !plan.canceled && !plan.done && plan.date < todayKey()).length;
 }
 
@@ -2032,6 +2044,22 @@ els.editMissionBtn?.addEventListener("click", () => {
     els.viewDate.value = todayKey();
   }
   document.querySelector("#timetable")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+els.backlogCoveredBtn?.addEventListener("click", () => {
+  const currentBacklog = getBacklogCount();
+  state.manualBacklogCount = Math.max(0, currentBacklog - 1);
+  render();
+});
+
+els.editBacklogBtn?.addEventListener("click", () => {
+  const currentBacklog = getBacklogCount();
+  const nextValue = window.prompt("Set backlog count", String(currentBacklog));
+  if (nextValue === null) return;
+  const count = Number(nextValue);
+  if (!Number.isFinite(count) || count < 0) return;
+  state.manualBacklogCount = Math.round(count);
+  render();
 });
 
 els.doctorPathForm?.addEventListener("submit", (event) => {

@@ -274,6 +274,24 @@ h3 {
   font-size: 2rem;
 }
 
+.stat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.stat-actions button {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.stat-actions .text-button {
+  color: var(--muted);
+}
+
 .headquarters-card {
   grid-column: span 2;
   background:

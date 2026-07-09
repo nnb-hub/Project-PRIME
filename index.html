@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/png" href="assets/icon-192.png" />
     <link rel="apple-touch-icon" href="assets/icon-192.png" />
-    <link rel="stylesheet" href="styles.css?v=26" />
+    <link rel="stylesheet" href="styles.css?v=27" />
   </head>
   <body>
     <aside class="mission-sidebar" aria-label="Dashboard navigation">
@@ -107,6 +107,10 @@
         <article>
           <span>Backlog Count</span>
           <strong id="dashboardBacklogCount">0</strong>
+          <div class="stat-actions">
+            <button id="backlogCoveredBtn" class="secondary-button" type="button">Covered</button>
+            <button id="editBacklogBtn" class="text-button" type="button">Edit</button>
+          </div>
         </article>
         <article>
           <span>Daily Completion</span>
@@ -520,6 +524,6 @@
       </div>
     </div>
 
-    <script type="module" src="app.js?v=26"></script>
+    <script type="module" src="app.js?v=27"></script>
   </body>
 </html>
