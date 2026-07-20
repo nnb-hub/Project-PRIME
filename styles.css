@@ -861,6 +861,48 @@ body:not(.dark-mode) input::placeholder {
   color: var(--muted);
 }
 
+.mock-insights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mock-metric,
+.mock-insight-main {
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 90%, var(--green));
+}
+
+.mock-metric span,
+.mock-metric small,
+.mock-insight-main span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.mock-metric strong {
+  display: block;
+  margin: 3px 0;
+  font-size: 1.2rem;
+}
+
+.mock-metric strong.positive { color: var(--green); }
+.mock-metric strong.negative { color: var(--rose); }
+
+.mock-insight-main {
+  grid-column: 1 / -1;
+}
+
+.mock-insight-main strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.86rem;
+}
+
 .revision-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -1621,6 +1663,7 @@ body:not(.dark-mode) input::placeholder {
 
   .stats-grid,
   .subject-grid,
+  .mock-insights,
   .score-form,
   .timetable-form,
   .weak-form,

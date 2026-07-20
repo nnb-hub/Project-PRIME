@@ -228,11 +228,15 @@ const els = {
   sessionList: document.querySelector("#sessionList"),
   mockForm: document.querySelector("#mockForm"),
   mockTotal: document.querySelector("#mockTotal"),
+  mockCustomTotal: document.querySelector("#mockCustomTotal"),
   mockScore: document.querySelector("#mockScore"),
   mockMistakes: document.querySelector("#mockMistakes"),
   mockMistakeType: document.querySelector("#mockMistakeType"),
   mockWeakArea: document.querySelector("#mockWeakArea"),
+  mockName: document.querySelector("#mockName"),
+  mockDate: document.querySelector("#mockDate"),
   mockChart: document.querySelector("#mockChart"),
+  mockInsights: document.querySelector("#mockInsights"),
   mockList: document.querySelector("#mockList"),
   revisionForm: document.querySelector("#revisionForm"),
   revisionInput: document.querySelector("#revisionInput"),
@@ -377,14 +381,17 @@ function normalizeTimetable(plans = []) {
 }
 
 function normalizeMock(mock = {}) {
-  const total = [180, 360, 720].includes(Number(mock.total)) ? Number(mock.total) : 720;
+  const suppliedTotal = Number(mock.total);
+  const total = Number.isFinite(suppliedTotal) && suppliedTotal > 0 ? Math.min(2000, Math.round(suppliedTotal)) : 720;
   return {
     ...mock,
     total,
     score: Math.max(0, Math.min(total, Number(mock.score || 0))),
     mistakes: Math.max(0, Number(mock.mistakes || 0)),
     mistakeType: mock.mistakeType || "Mixed mistakes",
-    weakArea: mock.weakArea || ""
+    weakArea: mock.weakArea || "",
+    name: mock.name || "",
+    date: mock.date || todayKey()
   };
 }
 
@@ -741,6 +748,7 @@ function render() {
   renderSyncStatus();
   els.planDate.value ||= todayKey();
   els.viewDate.value ||= todayKey();
+  els.mockDate.value ||= todayKey();
   saveState();
   renderExam();
   renderStats();
@@ -1177,15 +1185,61 @@ function renderMocks() {
     }).join("")
     : `<span>No scores yet</span>`;
 
+  renderMockInsights();
   els.mockList.innerHTML = [...state.mocks].slice(-5).reverse().map((mock) => `
     <div class="mini-item">
       <span>
-        ${mock.score}/${mock.total || 720} - ${getMockPercent(mock)}%
-        <small>${getMockProjectedScore(mock)}/720 projection - ${mock.mistakes || 0} mistakes - ${escapeHtml(mock.mistakeType || "Mixed mistakes")} - ${escapeHtml(mock.weakArea || "No weak area saved")} - ${mock.date}</small>
+        ${escapeHtml(mock.name || "Test")} · ${mock.score}/${mock.total || 720} - ${getMockPercent(mock)}%
+        <small>${getMockProjectedScore(mock)}/720 equivalent - ${mock.mistakes || 0} mistakes - ${escapeHtml(mock.mistakeType || "Mixed mistakes")} - ${escapeHtml(mock.weakArea || "No weak area saved")} - ${formatMockDate(mock.date)}</small>
       </span>
       <button class="text-button" type="button" data-mock-delete="${mock.id}">Remove</button>
     </div>
   `).join("");
+}
+
+function renderMockInsights() {
+  const tests = state.mocks;
+  if (!tests.length) {
+    els.mockInsights.innerHTML = `<div class="mock-insight-main"><strong>Add your first test</strong><span>Every score is normalized to percentage, so part-tests and full tests can be compared fairly.</span></div>`;
+    return;
+  }
+
+  const percentages = tests.map(getMockPercent);
+  const average = Math.round(percentages.reduce((sum, value) => sum + value, 0) / percentages.length);
+  const best = Math.max(...percentages);
+  const recent = percentages.slice(-3);
+  const previous = percentages.slice(-6, -3);
+  const recentAverage = Math.round(recent.reduce((sum, value) => sum + value, 0) / recent.length);
+  const previousAverage = previous.length ? Math.round(previous.reduce((sum, value) => sum + value, 0) / previous.length) : null;
+  const trend = previousAverage === null ? "Build your baseline" : recentAverage - previousAverage;
+  const averageMistakes = (tests.reduce((sum, test) => sum + Number(test.mistakes || 0), 0) / tests.length).toFixed(1);
+  const spread = Math.round(percentages.reduce((sum, value) => sum + Math.abs(value - average), 0) / percentages.length);
+  const mistakeCounts = tests.reduce((counts, test) => {
+    const type = test.mistakeType || "Mixed mistakes";
+    counts[type] = (counts[type] || 0) + 1;
+    return counts;
+  }, {});
+  const recurringError = Object.entries(mistakeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "Mixed mistakes";
+  const latest = tests.at(-1);
+  const targetScore = Number(state.doctorPath?.targetScore) || 650;
+  const targetPercent = Math.round((targetScore / 720) * 100);
+  const targetGap = Math.max(0, targetPercent - getMockPercent(latest));
+  const trendText = typeof trend === "number" ? `${trend > 0 ? "+" : ""}${trend}% vs previous 3` : trend;
+  const nextAction = latest.weakArea
+    ? `Next move: repair ${latest.weakArea} and review ${recurringError.toLowerCase()} errors before the next test.`
+    : `Next move: review ${recurringError.toLowerCase()} errors before the next test.`;
+
+  els.mockInsights.innerHTML = `
+    <div class="mock-metric"><span>Average</span><strong>${average}%</strong><small>${getMockProjectedScore({ score: average, total: 100 })}/720 equivalent</small></div>
+    <div class="mock-metric"><span>Best</span><strong>${best}%</strong><small>${tests.length} test${tests.length === 1 ? "" : "s"} logged</small></div>
+    <div class="mock-metric"><span>Trend</span><strong class="${trend > 0 ? "positive" : trend < 0 ? "negative" : ""}">${trendText}</strong><small>${spread <= 5 ? "Consistent performance" : "Scores are variable"}</small></div>
+    <div class="mock-insight-main"><strong>${nextAction}</strong><span>Average reported mistakes: ${averageMistakes}. Your latest test is ${targetGap ? `${targetGap}% below` : "at or above"} the ${targetScore}/720 target pace.</span></div>
+  `;
+}
+
+function formatMockDate(date) {
+  const parsed = new Date(`${date}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? date : parsed.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
 function getMockPercent(mock) {
@@ -2213,7 +2267,11 @@ els.sessionList.addEventListener("click", async (event) => {
 
 els.mockForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  const total = Number(els.mockTotal.value || 720);
+  const total = getSelectedMockTotal();
+  if (!total) {
+    els.mockCustomTotal.focus();
+    return;
+  }
   const score = Math.max(0, Math.min(total, Number(els.mockScore.value || 0)));
   state.mocks.push({
     id: crypto.randomUUID(),
@@ -2222,19 +2280,36 @@ els.mockForm.addEventListener("submit", (event) => {
     mistakes: Number(els.mockMistakes.value || 0),
     mistakeType: els.mockMistakeType.value,
     weakArea: els.mockWeakArea.value.trim(),
-    date: todayKey()
+    name: els.mockName.value.trim(),
+    date: els.mockDate.value || todayKey()
   });
   els.mockScore.value = "";
   els.mockMistakes.value = "";
   els.mockWeakArea.value = "";
+  els.mockName.value = "";
+  els.mockDate.value = todayKey();
   render();
 });
 
 els.mockTotal?.addEventListener("change", () => {
-  const total = Number(els.mockTotal.value || 720);
+  const custom = els.mockTotal.value === "custom";
+  els.mockCustomTotal.classList.toggle("hidden", !custom);
+  els.mockCustomTotal.required = custom;
+  const total = custom ? Number(els.mockCustomTotal.value || 0) : Number(els.mockTotal.value || 720);
   els.mockScore.max = String(total);
-  els.mockScore.placeholder = `Score / ${total}`;
+  els.mockScore.placeholder = total ? `Score / ${total}` : "Score";
 });
+
+els.mockCustomTotal?.addEventListener("input", () => {
+  const total = getSelectedMockTotal();
+  els.mockScore.max = String(total || 2000);
+  els.mockScore.placeholder = total ? `Score / ${total}` : "Score";
+});
+
+function getSelectedMockTotal() {
+  const total = els.mockTotal.value === "custom" ? Number(els.mockCustomTotal.value) : Number(els.mockTotal.value || 720);
+  return Number.isFinite(total) && total > 0 ? Math.min(2000, Math.round(total)) : 0;
+}
 
 els.mockList.addEventListener("click", (event) => {
   const id = event.target.dataset.mockDelete;

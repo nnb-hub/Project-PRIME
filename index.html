@@ -412,8 +412,10 @@
               <option value="720">720 marks</option>
               <option value="360">360 marks</option>
               <option value="180">180 marks</option>
+              <option value="custom">Custom total</option>
             </select>
-            <input id="mockScore" type="number" min="0" max="720" placeholder="Score" required />
+            <input id="mockCustomTotal" class="hidden" type="number" min="1" max="2000" placeholder="Custom total marks" />
+            <input id="mockScore" type="number" min="0" max="720" placeholder="Score / 720" required />
             <input id="mockMistakes" type="number" min="0" max="180" placeholder="Mistakes" />
             <select id="mockMistakeType">
               <option>Mixed mistakes</option>
@@ -424,9 +426,12 @@
               <option>Time pressure</option>
             </select>
             <input id="mockWeakArea" type="text" maxlength="70" placeholder="Weak area" />
+            <input id="mockName" type="text" maxlength="60" placeholder="Test name (optional)" />
+            <input id="mockDate" type="date" aria-label="Test date" />
             <button type="submit">Add</button>
           </form>
           <div class="chart" id="mockChart" aria-label="Mock test score chart"></div>
+          <div id="mockInsights" class="mock-insights" aria-live="polite"></div>
           <div id="mockList" class="mini-list"></div>
         </article>
 
