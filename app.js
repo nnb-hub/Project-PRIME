@@ -62,7 +62,8 @@ const defaultState = {
     targetScore: "700",
     targetCollege: "MBBS 2027",
     note: "Learn Deeply. Heal Faithfully. Serve Globally."
-  }
+  },
+  predictor: { category: "General", route: "Both" }
 };
 
 const syllabusUnits = [
@@ -253,8 +254,21 @@ const els = {
   mockWeakArea: document.querySelector("#mockWeakArea"),
   mockName: document.querySelector("#mockName"),
   mockDate: document.querySelector("#mockDate"),
+  mockPhysicsScore: document.querySelector("#mockPhysicsScore"),
+  mockPhysicsTotal: document.querySelector("#mockPhysicsTotal"),
+  mockChemistryScore: document.querySelector("#mockChemistryScore"),
+  mockChemistryTotal: document.querySelector("#mockChemistryTotal"),
+  mockBotanyScore: document.querySelector("#mockBotanyScore"),
+  mockBotanyTotal: document.querySelector("#mockBotanyTotal"),
+  mockZoologyScore: document.querySelector("#mockZoologyScore"),
+  mockZoologyTotal: document.querySelector("#mockZoologyTotal"),
   mockChart: document.querySelector("#mockChart"),
   mockInsights: document.querySelector("#mockInsights"),
+  mockSubjectInsights: document.querySelector("#mockSubjectInsights"),
+  rankPredictorForm: document.querySelector("#rankPredictorForm"),
+  predictorCategory: document.querySelector("#predictorCategory"),
+  predictorRoute: document.querySelector("#predictorRoute"),
+  rankPredictorResult: document.querySelector("#rankPredictorResult"),
   mockList: document.querySelector("#mockList"),
   revisionForm: document.querySelector("#revisionForm"),
   revisionInput: document.querySelector("#revisionInput"),
@@ -367,6 +381,7 @@ function normalizeState(value = {}) {
     timetable: normalizeTimetable(parsed.timetable || defaultState.timetable),
     syllabusDone: { ...defaultState.syllabusDone, ...(parsed.syllabusDone || {}) },
     doctorPath: { ...defaultState.doctorPath, ...(parsed.doctorPath || {}) },
+    predictor: { ...defaultState.predictor, ...(parsed.predictor || {}) },
     updatedAt: parsed.updatedAt || new Date().toISOString()
   };
 }
@@ -410,8 +425,21 @@ function normalizeMock(mock = {}) {
     mistakeType: mock.mistakeType || "Mixed mistakes",
     weakArea: mock.weakArea || "",
     name: mock.name || "",
-    date: mock.date || todayKey()
+    date: mock.date || todayKey(),
+    subjectBreakdown: normalizeSubjectBreakdown(mock.subjectBreakdown)
   };
+}
+
+function normalizeSubjectBreakdown(breakdown = {}) {
+  return ["Physics", "Chemistry", "Botany", "Zoology"].reduce((result, subject) => {
+    const entry = breakdown[subject] || {};
+    const total = Number(entry.total);
+    const score = Number(entry.score);
+    if (Number.isFinite(total) && total > 0 && Number.isFinite(score) && score >= 0) {
+      result[subject] = { score: Math.min(Math.round(score), Math.round(total)), total: Math.round(total) };
+    }
+    return result;
+  }, {});
 }
 
 function normalizeRevision(revision = {}) {
@@ -777,6 +805,7 @@ function render() {
   renderSubjects();
   renderSessions();
   renderMocks();
+  renderRankPredictor();
   renderRevisions();
   renderTimetable();
   renderMotivation();
@@ -1236,15 +1265,54 @@ function renderMocks() {
     : `<span>No scores yet</span>`;
 
   renderMockInsights();
+  renderMockSubjectInsights();
   els.mockList.innerHTML = [...state.mocks].slice(-5).reverse().map((mock) => `
     <div class="mini-item">
       <span>
         ${escapeHtml(mock.name || "Test")} · ${mock.score}/${mock.total || 720} - ${getMockPercent(mock)}%
-        <small>${getMockProjectedScore(mock)}/720 equivalent - ${mock.mistakes || 0} mistakes - ${escapeHtml(mock.mistakeType || "Mixed mistakes")} - ${escapeHtml(mock.weakArea || "No weak area saved")} - ${formatMockDate(mock.date)}</small>
+        <small>${getMockProjectedScore(mock)}/720 equivalent - ${mock.mistakes || 0} mistakes - ${escapeHtml(mock.mistakeType || "Mixed mistakes")} - ${escapeHtml(mock.weakArea || "No weak area saved")} - ${formatMockDate(mock.date)}${formatSubjectBreakdown(mock)}</small>
       </span>
       <button class="text-button" type="button" data-mock-delete="${mock.id}">Remove</button>
     </div>
   `).join("");
+}
+
+function renderMockSubjectInsights() {
+  if (!els.mockSubjectInsights) return;
+  const subjects = ["Physics", "Chemistry", "Botany", "Zoology"];
+  const subjectData = subjects.map((subject) => {
+    const entries = state.mocks
+      .map((mock) => ({ ...mock.subjectBreakdown?.[subject], date: mock.date }))
+      .filter((entry) => entry.total > 0);
+    const average = entries.length ? Math.round(entries.reduce((sum, entry) => sum + ((entry.score / entry.total) * 100), 0) / entries.length) : null;
+    const latest = entries.at(-1);
+    const previous = entries.length > 1 ? entries.at(-2) : null;
+    const trend = latest && previous ? Math.round(((latest.score / latest.total) - (previous.score / previous.total)) * 100) : null;
+    return { subject, entries, average, trend };
+  });
+  const tracked = subjectData.filter((item) => item.average !== null);
+  if (!tracked.length) {
+    els.mockSubjectInsights.innerHTML = `<div class="subject-analysis-empty">Add subject-wise scores in your next test to reveal strengths, weak subjects, and individual trends.</div>`;
+    return;
+  }
+  const strongest = [...tracked].sort((a, b) => b.average - a.average)[0];
+  const focus = [...tracked].sort((a, b) => a.average - b.average)[0];
+  els.mockSubjectInsights.innerHTML = `
+    <div class="subject-analysis-header"><div><p class="eyebrow">Subject Analysis</p><h3>Where to push next</h3></div><span>Strongest: ${strongest.subject} · Focus: ${focus.subject}</span></div>
+    <div class="subject-analysis-grid">
+      ${subjectData.map((item) => item.average === null
+        ? `<div class="subject-analysis-card muted"><strong>${item.subject}</strong><span>No split logged yet</span></div>`
+        : `<div class="subject-analysis-card"><strong>${item.subject}</strong><b>${item.average}%</b><span>${item.entries.length} test${item.entries.length === 1 ? "" : "s"} · ${item.trend === null ? "Add another for trend" : `${item.trend > 0 ? "+" : ""}${item.trend}% vs last`}</span><div class="subject-analysis-track"><i style="width:${item.average}%"></i></div></div>`
+      ).join("")}
+    </div>
+    <p class="subject-analysis-action">${focus.subject} is your current focus subject. Review its latest errors, then plan a short targeted practice block before the next test.</p>
+  `;
+}
+
+function formatSubjectBreakdown(mock) {
+  const entries = Object.entries(mock.subjectBreakdown || {});
+  if (!entries.length) return "";
+  return ` · ${entries.map(([subject, item]) => `${subject.slice(0, 3)} ${item.score}/${item.total}`).join(" · ")}`;
 }
 
 function renderMockInsights() {
@@ -1300,6 +1368,94 @@ function getMockPercent(mock) {
 
 function getMockProjectedScore(mock) {
   return Math.round((getMockPercent(mock) / 100) * 720);
+}
+
+const neet2026RankAnchors = [
+  { score: 715, rank: 1 },
+  { score: 700, rank: 19 },
+  { score: 690, rank: 138 },
+  { score: 650, rank: 1492 },
+  { score: 600, rank: 10160 },
+  { score: 500, rank: 90780 },
+  { score: 213, rank: 996935 },
+  { score: 177, rank: 1121185 }
+];
+
+function renderRankPredictor() {
+  if (!els.rankPredictorResult) return;
+  els.predictorCategory.value = state.predictor.category || "General";
+  els.predictorRoute.value = state.predictor.route || "Both";
+  const scoreData = getPredictorScore();
+  if (!scoreData) {
+    els.rankPredictorResult.innerHTML = `<div class="predictor-empty">Add a test in Test Analysis to unlock your automatic rank and college-path estimate.</div>`;
+    return;
+  }
+  const result = estimateNeet2026Rank(scoreData.score, state.predictor.category);
+  const path = getCollegePath(result.estimate, state.predictor.category, state.predictor.route, result.eligible);
+  els.rankPredictorResult.innerHTML = `
+    <div class="rank-result-main"><span>Estimated All India Rank</span><strong>${result.displayRank}</strong><small>Current NEET level: ${scoreData.score}/720 - ${scoreData.label}</small></div>
+    <div class="rank-result-card"><span>2026 eligibility</span><strong>${result.eligible ? "Eligible" : "Below qualifying range"}</strong><small>${result.cutoffNote}</small></div>
+    <div class="rank-result-card"><span>College path</span><strong>${path.title}</strong><small>${path.detail}</small></div>
+    <div class="rank-result-action"><strong>Best next step</strong><span>${path.action}</span></div>
+  `;
+}
+
+function getPredictorScore() {
+  if (!state.mocks.length) return null;
+  const latest = state.mocks.at(-1);
+  const latestEquivalent = getMockProjectedScore(latest);
+  const recent = state.mocks.slice(-3).map(getMockProjectedScore);
+  const recentAverage = Math.round(recent.reduce((sum, score) => sum + score, 0) / recent.length);
+  const score = recent.length === 1 ? latestEquivalent : Math.round((latestEquivalent * 0.6) + (recentAverage * 0.4));
+  const label = recent.length === 1
+    ? `based on your latest test (${latest.score}/${latest.total})`
+    : `60% latest test + 40% recent ${recent.length}-test average`;
+  return { score, label };
+}
+
+function estimateNeet2026Rank(rawScore, category) {
+  const score = Math.max(0, Math.min(720, Math.round(rawScore)));
+  const cutoff = ["General", "EWS"].includes(category) ? 213 : 177;
+  const eligible = score >= cutoff;
+  const lowerAnchor = neet2026RankAnchors.find((anchor) => score >= anchor.score);
+  const upperIndex = lowerAnchor ? neet2026RankAnchors.indexOf(lowerAnchor) - 1 : neet2026RankAnchors.length - 1;
+  const upperAnchor = upperIndex >= 0 ? neet2026RankAnchors[upperIndex] : null;
+  let estimate;
+  if (upperAnchor && lowerAnchor) {
+    const ratio = (upperAnchor.score - score) / (upperAnchor.score - lowerAnchor.score);
+    estimate = Math.round(upperAnchor.rank + ((lowerAnchor.rank - upperAnchor.rank) * ratio));
+  } else if (lowerAnchor) {
+    estimate = lowerAnchor.rank;
+  } else {
+    estimate = 1450000 + Math.round((177 - score) * 8000);
+  }
+  const uncertainty = score >= 650 ? 0.12 : score >= 600 ? 0.18 : score >= 500 ? 0.28 : score >= cutoff ? 0.42 : 0.55;
+  const low = Math.max(1, Math.round(estimate * (1 - uncertainty)));
+  const high = Math.round(estimate * (1 + uncertainty));
+  return {
+    estimate,
+    low,
+    high,
+    displayRank: `AIR ~${formatRank(estimate)}`,
+    confidence: score >= 650 ? "Higher" : score >= 500 ? "Moderate" : "Lower",
+    eligible,
+    cutoffNote: ["General", "EWS"].includes(category) ? "UR/EWS 2026 qualifying mark: 213" : "OBC-NCL/SC/ST 2026 qualifying mark: 177"
+  };
+}
+
+function getCollegePath(rank, category, route, eligible) {
+  if (!eligible) return { title: "Build score first", detail: "This score is below the 2026 qualifying band for the selected category.", action: "Focus on a safe qualifying target first; college forecasting begins only after eligibility." };
+  const routeText = route === "AIQ" ? "AIQ" : route === "State" ? "state-quota" : "AIQ and state-quota";
+  if (rank <= 500) return { title: "Elite government MBBS range", detail: `Very competitive ${routeText} choices; individual college outcomes still depend on category and round.`, action: "Build a ranked choice list of top government and central institutes when counselling opens." };
+  if (rank <= 2000) return { title: "Strong government MBBS range", detail: `Government MBBS through ${routeText} is a realistic target, but top colleges remain highly competitive.`, action: "Keep both ambitious AIQ choices and safer government options in your list." };
+  if (rank <= 10000) return { title: "Government MBBS opportunity", detail: `Government MBBS is possible through ${routeText}; domicile and category can shift outcomes significantly.`, action: "Track your state counselling bulletin alongside MCC round-wise closing ranks." };
+  if (rank <= 30000) return { title: "State government MBBS focus", detail: `State quota is likely more important than AIQ at this range, especially for ${category}.`, action: "Prioritise state government colleges and keep BDS as an informed backup." };
+  if (rank <= 90000) return { title: "Selective government / BDS / AYUSH range", detail: "Government MBBS depends heavily on state, category and seat movement; allied routes become important options.", action: "Create a counselling list with government BDS and AYUSH alternatives, then update it with published closing ranks." };
+  return { title: "Counselling options need careful planning", detail: "Private, BDS and AYUSH options may be more realistic; eligibility alone does not indicate an MBBS seat.", action: "Use official state and MCC seat matrices and set a higher score target for the next attempt." };
+}
+
+function formatRank(rank) {
+  return new Intl.NumberFormat("en-IN").format(Math.max(1, Math.round(rank)));
 }
 
 function renderRevisions() {
@@ -2387,6 +2543,7 @@ els.mockForm.addEventListener("submit", (event) => {
     return;
   }
   const score = Math.max(0, Math.min(total, Number(els.mockScore.value || 0)));
+  const subjectBreakdown = getMockSubjectBreakdown();
   state.mocks.push({
     id: crypto.randomUUID(),
     score,
@@ -2395,15 +2552,39 @@ els.mockForm.addEventListener("submit", (event) => {
     mistakeType: els.mockMistakeType.value,
     weakArea: els.mockWeakArea.value.trim(),
     name: els.mockName.value.trim(),
-    date: els.mockDate.value || todayKey()
+    date: els.mockDate.value || todayKey(),
+    subjectBreakdown
   });
   els.mockScore.value = "";
   els.mockMistakes.value = "";
   els.mockWeakArea.value = "";
   els.mockName.value = "";
   els.mockDate.value = todayKey();
+  clearMockSubjectInputs();
   render();
 });
+
+function getMockSubjectBreakdown() {
+  const subjects = [
+    ["Physics", els.mockPhysicsScore, els.mockPhysicsTotal],
+    ["Chemistry", els.mockChemistryScore, els.mockChemistryTotal],
+    ["Botany", els.mockBotanyScore, els.mockBotanyTotal],
+    ["Zoology", els.mockZoologyScore, els.mockZoologyTotal]
+  ];
+  return subjects.reduce((breakdown, [subject, scoreInput, totalInput]) => {
+    const score = Number(scoreInput.value);
+    const total = Number(totalInput.value);
+    if (scoreInput.value !== "" && totalInput.value !== "" && Number.isFinite(score) && score >= 0 && Number.isFinite(total) && total > 0) {
+      breakdown[subject] = { score: Math.min(Math.round(score), Math.round(total)), total: Math.round(total) };
+    }
+    return breakdown;
+  }, {});
+}
+
+function clearMockSubjectInputs() {
+  [els.mockPhysicsScore, els.mockPhysicsTotal, els.mockChemistryScore, els.mockChemistryTotal, els.mockBotanyScore, els.mockBotanyTotal, els.mockZoologyScore, els.mockZoologyTotal]
+    .forEach((input) => { input.value = ""; });
+}
 
 els.mockTotal?.addEventListener("change", () => {
   const custom = els.mockTotal.value === "custom";
@@ -2429,6 +2610,15 @@ els.mockList.addEventListener("click", (event) => {
   const id = event.target.dataset.mockDelete;
   if (!id) return;
   state.mocks = state.mocks.filter((mock) => mock.id !== id);
+  render();
+});
+
+els.rankPredictorForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  state.predictor = {
+    category: els.predictorCategory.value,
+    route: els.predictorRoute.value
+  };
   render();
 });
 

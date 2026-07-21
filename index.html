@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/png" href="assets/icon-192.png" />
     <link rel="apple-touch-icon" href="assets/icon-192.png" />
-    <link rel="stylesheet" href="styles.css?v=30" />
+    <link rel="stylesheet" href="styles.css?v=33" />
   </head>
   <body>
     <aside class="mission-sidebar" aria-label="Dashboard navigation">
@@ -473,11 +473,39 @@
             <input id="mockWeakArea" type="text" maxlength="70" placeholder="Weak area" />
             <input id="mockName" type="text" maxlength="60" placeholder="Test name (optional)" />
             <input id="mockDate" type="date" aria-label="Test date" />
+            <details class="subject-split" id="subjectSplit">
+              <summary>Subject-wise scores (optional)</summary>
+              <p>Enter each subject score and its maximum marks to find your real strengths.</p>
+              <div class="subject-split-grid">
+                <label>Physics <span><input id="mockPhysicsScore" type="number" min="0" placeholder="Score" /><input id="mockPhysicsTotal" type="number" min="1" placeholder="Out of" /></span></label>
+                <label>Chemistry <span><input id="mockChemistryScore" type="number" min="0" placeholder="Score" /><input id="mockChemistryTotal" type="number" min="1" placeholder="Out of" /></span></label>
+                <label>Botany <span><input id="mockBotanyScore" type="number" min="0" placeholder="Score" /><input id="mockBotanyTotal" type="number" min="1" placeholder="Out of" /></span></label>
+                <label>Zoology <span><input id="mockZoologyScore" type="number" min="0" placeholder="Score" /><input id="mockZoologyTotal" type="number" min="1" placeholder="Out of" /></span></label>
+              </div>
+            </details>
             <button type="submit">Add</button>
           </form>
           <div class="chart" id="mockChart" aria-label="Mock test score chart"></div>
           <div id="mockInsights" class="mock-insights" aria-live="polite"></div>
+          <div id="mockSubjectInsights" class="mock-subject-insights" aria-live="polite"></div>
           <div id="mockList" class="mini-list"></div>
+        </article>
+
+        <article id="predictor" class="panel rank-predictor-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">NEET 2026 Intelligence</p>
+              <h2>Rank & College Path Predictor</h2>
+            </div>
+          </div>
+          <p class="predictor-intro">Automatically updated from Test Analysis. Your latest test carries the most weight, while recent tests stabilise the estimate.</p>
+          <form id="rankPredictorForm" class="predictor-form">
+            <label>Category<select id="predictorCategory"><option value="General">General</option><option value="EWS">EWS</option><option value="OBC">OBC-NCL</option><option value="SC">SC</option><option value="ST">ST</option></select></label>
+            <label>Counselling route<select id="predictorRoute"><option value="AIQ">15% AIQ + central institutes</option><option value="State">State quota focus</option><option value="Both">Compare AIQ and state quota</option></select></label>
+            <button type="submit">Refresh Guidance</button>
+          </form>
+          <div id="rankPredictorResult" class="rank-predictor-result" aria-live="polite"></div>
+          <p class="predictor-source">Data anchors: NTA NEET (UG) 2026 results and Key Data Points report, issued 16 July 2026. This is an estimate, not an official rank or seat-allotment result.</p>
         </article>
 
         <article id="revision" class="panel">
@@ -574,6 +602,6 @@
       </div>
     </div>
 
-    <script type="module" src="app.js?v=30"></script>
+    <script type="module" src="app.js?v=33"></script>
   </body>
 </html>

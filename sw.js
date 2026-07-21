@@ -1,9 +1,9 @@
-const CACHE_NAME = "project-prime-invictus-ignis-v30";
+const CACHE_NAME = "project-prime-invictus-ignis-v33";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=30",
-  "./app.js?v=30",
+  "./styles.css?v=33",
+  "./app.js?v=33",
   "./manifest.webmanifest",
   "./assets/logo.png",
   "./assets/icon-192.png",
