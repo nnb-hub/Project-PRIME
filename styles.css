@@ -2848,6 +2848,7 @@ body.dark-mode .stats-grid article, body.dark-mode .panel, body.dark-mode .day-g
 body.dark-mode .timetable-list { display: grid; gap: 12px; }
 body.dark-mode .day-title { padding: 13px 16px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.035); }
 body.dark-mode .plan-row, body.dark-mode .plan-row.done, body.dark-mode .plan-row.late, body.dark-mode .plan-row.missed, body.dark-mode .plan-row.canceled { min-height: 104px; border: 0; border-bottom: 1px solid var(--line); border-left: 4px solid #5b8cff; background: #101e33; }
+body.dark-mode .plan-row { grid-template-columns: auto auto minmax(0, 1fr); grid-template-areas: "check icon main" "check icon actions"; gap: 12px; padding: 14px 16px; }
 body.dark-mode .plan-row.done { border-left-color: #38d7b6; background: #102d2b; }
 body.dark-mode .plan-row.late { border-left-color: #ffd166; background: #31291c; }
 body.dark-mode .plan-row.missed, body.dark-mode .plan-row.canceled { border-left-color: #ff6b8a; background: #301b27; }
@@ -2857,3 +2858,18 @@ body.dark-mode .plan-row small { color: #aebed2; }
 body.dark-mode .plan-actions button { min-height: 32px; padding: 6px 10px; border-radius: 8px; }
 @media (max-width: 1100px) { body.dark-mode .mission-sidebar { width: 82px; } body.dark-mode .app-shell { width: min(1180px, calc(100% - 132px)); margin-left: 106px; } body.dark-mode .sidebar-brand div, body.dark-mode .sidebar-nav span { display: none; } }
 @media (max-width: 760px) { body.dark-mode .app-shell { width: min(100% - 20px, 1180px); margin: 0 auto; padding-top: 12px; } }
+
+/* Dark-mode parity and contrast fixes. */
+body.dark-mode .hero { min-height: 265px; height: auto; }
+body.dark-mode button:not(.text-button) { color: #fff; }
+body.dark-mode button.secondary-button,
+body.dark-mode button.text-button,
+body.dark-mode button.history-toggle,
+body.dark-mode .segmented-control button:not(.active) { color: var(--blue); background: rgba(88, 166, 255, .12); box-shadow: none; }
+body.dark-mode button.secondary-button:hover,
+body.dark-mode button.text-button:hover,
+body.dark-mode button.history-toggle:hover { color: #fff; background: var(--blue); }
+body.dark-mode .subject-card { border-color: var(--line); background: #101e33; }
+body.dark-mode .subject-progress-row { border-color: var(--line); background: rgba(255,255,255,.025); }
+body.dark-mode .subject-stepper > strong { color: var(--ink); background: #0b1728; }
+body.dark-mode .subject-total-button { color: #fff; background: #2765f7; }
