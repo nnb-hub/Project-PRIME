@@ -1506,6 +1506,7 @@ function renderTimetable() {
               <label class="plan-check" title="Mark completed">
                 <input type="checkbox" aria-label="Mark completed" data-plan-toggle="${row.id}" ${row.done ? "checked" : ""} ${row.canceled ? "disabled" : ""} />
               </label>
+              <span class="plan-subject-icon" data-plan-subject="${escapeHtml(row.subject)}" aria-hidden="true">${getPlanIcon(row.subject)}</span>
               <div class="plan-main">
                 <div class="plan-topline">
                   <time>${row.time}</time>
@@ -1525,6 +1526,17 @@ function renderTimetable() {
       `;
     })
     .join("");
+}
+
+function getPlanIcon(subject) {
+  return {
+    Physics: "⌁",
+    Chemistry: "⚗",
+    Botany: "⌘",
+    Zoology: "◉",
+    Revision: "↻",
+    "Mock Test": "✦"
+  }[subject] || "•";
 }
 
 function renderPlanActions(row) {
