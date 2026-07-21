@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/png" href="assets/icon-192.png" />
     <link rel="apple-touch-icon" href="assets/icon-192.png" />
-    <link rel="stylesheet" href="styles.css?v=29" />
+    <link rel="stylesheet" href="styles.css?v=30" />
   </head>
   <body>
     <aside class="mission-sidebar" aria-label="Dashboard navigation">
@@ -136,7 +136,38 @@
             <strong id="weeklyMissionGrade" class="report-grade">--</strong>
           </div>
           <div id="weeklyReportGrid" class="weekly-report-grid"></div>
+          <p id="weeklyReportAction" class="weekly-report-action"></p>
         </article>
+      </section>
+
+      <section class="daily-command-grid" aria-label="Daily command center">
+        <article class="panel priority-card">
+          <p class="eyebrow">Today’s Priority</p>
+          <h2 id="priorityTask">Set your first task</h2>
+          <p id="priorityMeta" class="priority-meta">Add a task to the timetable and it will appear here.</p>
+          <button id="priorityFocusBtn" type="button">Start Focus Mode</button>
+        </article>
+        <article class="panel focus-preview-card">
+          <div>
+            <p class="eyebrow">Deep Work</p>
+            <h2>Focus Mode</h2>
+            <p>One task, one timer, no dashboard noise.</p>
+          </div>
+          <button id="focusModeBtn" class="secondary-button" type="button">Enter Focus Mode</button>
+        </article>
+      </section>
+
+      <section id="focusDeck" class="focus-deck hidden" aria-live="polite">
+        <button id="exitFocusModeBtn" class="focus-exit" type="button">Exit</button>
+        <p class="eyebrow">Focus Mode</p>
+        <p id="focusDeckSubject" class="focus-deck-subject">Your next task</p>
+        <h2 id="focusDeckTask">Choose one clear action and begin.</h2>
+        <strong id="focusDeckTimer">00:00:00</strong>
+        <p id="focusDeckStatus">Ready when you are.</p>
+        <div class="focus-deck-actions">
+          <button id="focusDeckStartBtn" type="button">Start Timer</button>
+          <button id="focusDeckPauseBtn" class="secondary-button" type="button">Pause</button>
+        </div>
       </section>
 
       <section id="mission" class="mission-grid">
@@ -352,6 +383,11 @@
             </div>
           </div>
           <blockquote id="motivationQuote"></blockquote>
+          <div class="consistency-header">
+            <strong>Consistency map</strong>
+            <span id="consistencySummary">0 active days</span>
+          </div>
+          <div id="consistencyHeatmap" class="consistency-heatmap" aria-label="Last 28 days of study consistency"></div>
           <button id="focusDoneBtn" type="button">Mark Today Focused</button>
           <button id="exportDataBtn" class="secondary-button" type="button">Export Backup</button>
           <p id="focusStatus" class="status-line"></p>
@@ -367,6 +403,15 @@
           <div class="subject-grid" id="subjectGrid"></div>
         </section>
       </section>
+
+      <div id="celebration" class="celebration hidden" role="status" aria-live="polite">
+        <div class="celebration-card">
+          <span>✦</span>
+          <h2>Mission complete</h2>
+          <p>Today’s planned tasks are done. Take a breath—you earned it.</p>
+          <button id="celebrationCloseBtn" type="button">Continue</button>
+        </div>
+      </div>
 
 
       <section class="lower-grid">
@@ -529,6 +574,6 @@
       </div>
     </div>
 
-    <script type="module" src="app.js?v=29"></script>
+    <script type="module" src="app.js?v=30"></script>
   </body>
 </html>

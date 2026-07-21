@@ -56,6 +56,7 @@ const defaultState = {
     { id: crypto.randomUUID(), subject: "Physics", topic: "Rotational Motion", priority: "High", action: "Redo marked questions" }
   ],
   resolvedWeakTopics: [],
+  celebratedDates: [],
   syllabusDone: {},
   doctorPath: {
     targetScore: "700",
@@ -180,8 +181,23 @@ const els = {
   hqProductivity: document.querySelector("#hqProductivity"),
   missionDay: document.querySelector("#missionDay"),
   missionTodayPriority: document.querySelector("#missionTodayPriority"),
+  priorityTask: document.querySelector("#priorityTask"),
+  priorityMeta: document.querySelector("#priorityMeta"),
+  priorityFocusBtn: document.querySelector("#priorityFocusBtn"),
+  focusModeBtn: document.querySelector("#focusModeBtn"),
+  exitFocusModeBtn: document.querySelector("#exitFocusModeBtn"),
+  focusDeck: document.querySelector("#focusDeck"),
+  focusDeckSubject: document.querySelector("#focusDeckSubject"),
+  focusDeckTask: document.querySelector("#focusDeckTask"),
+  focusDeckTimer: document.querySelector("#focusDeckTimer"),
+  focusDeckStatus: document.querySelector("#focusDeckStatus"),
+  focusDeckStartBtn: document.querySelector("#focusDeckStartBtn"),
+  focusDeckPauseBtn: document.querySelector("#focusDeckPauseBtn"),
+  celebration: document.querySelector("#celebration"),
+  celebrationCloseBtn: document.querySelector("#celebrationCloseBtn"),
   weeklyMissionGrade: document.querySelector("#weeklyMissionGrade"),
   weeklyReportGrid: document.querySelector("#weeklyReportGrid"),
+  weeklyReportAction: document.querySelector("#weeklyReportAction"),
   missionMainChapter: document.querySelector("#missionMainChapter"),
   missionRevisionTarget: document.querySelector("#missionRevisionTarget"),
   missionMcqGoal: document.querySelector("#missionMcqGoal"),
@@ -214,6 +230,8 @@ const els = {
   doctorPathNoteInput: document.querySelector("#doctorPathNoteInput"),
   doctorPathNote: document.querySelector("#doctorPathNote"),
   dailyLine: document.querySelector("#dailyLine"),
+  consistencyHeatmap: document.querySelector("#consistencyHeatmap"),
+  consistencySummary: document.querySelector("#consistencySummary"),
   goalForm: document.querySelector("#goalForm"),
   goalInput: document.querySelector("#goalInput"),
   goalList: document.querySelector("#goalList"),
@@ -342,6 +360,7 @@ function normalizeState(value = {}) {
     mocks: (parsed.mocks || defaultState.mocks).map(normalizeMock),
     revisions: (parsed.revisions || defaultState.revisions).map(normalizeRevision),
     focusDays: parsed.focusDays || defaultState.focusDays,
+    celebratedDates: Array.isArray(parsed.celebratedDates) ? parsed.celebratedDates : [],
     manualBacklogCount: Number.isFinite(Number(parsed.manualBacklogCount)) ? Math.max(0, Math.round(Number(parsed.manualBacklogCount))) : null,
     weakTopics: parsed.weakTopics || defaultState.weakTopics,
     resolvedWeakTopics: parsed.resolvedWeakTopics || defaultState.resolvedWeakTopics,
@@ -753,6 +772,7 @@ function render() {
   renderExam();
   renderStats();
   renderMissionControl();
+  renderDailyCommandCenter();
   renderGoals();
   renderSubjects();
   renderSessions();
@@ -840,6 +860,20 @@ function renderStats() {
   if (els.missionTodayPriority) els.missionTodayPriority.textContent = activePlan ? `${activePlan.subject}: ${activePlan.task}` : "No timetable yet. Create today's battle plan.";
   renderWeeklyReport();
   renderLiveSession();
+  renderFocusDeck();
+}
+
+function renderDailyCommandCenter() {
+  const todayPlans = state.timetable
+    .filter((plan) => plan.date === todayKey() && !plan.archived && !plan.canceled)
+    .sort((a, b) => a.time.localeCompare(b.time));
+  const nextPlan = todayPlans.find((plan) => !plan.done) || todayPlans.at(-1);
+  if (els.priorityTask) els.priorityTask.textContent = nextPlan?.task || "Set your first task";
+  if (els.priorityMeta) {
+    els.priorityMeta.textContent = nextPlan
+      ? `${nextPlan.subject} · ${nextPlan.time}${nextPlan.done ? " · Completed—choose tomorrow’s first task." : " · Your next clear action."}`
+      : "Add a task to the timetable and it will appear here.";
+  }
 }
 
 function getMissionDay() {
@@ -883,6 +917,22 @@ function renderLiveSession() {
   els.totalStudyTime.textContent = formatDuration(getLiveStudyMs());
   els.totalBreakTime.textContent = formatDuration(getLiveBreakMs());
   els.breakCount.textContent = state.liveSession.breaks.length;
+}
+
+function renderFocusDeck() {
+  if (!els.focusDeckTimer) return;
+  const todayPlans = state.timetable
+    .filter((plan) => plan.date === todayKey() && !plan.archived && !plan.canceled)
+    .sort((a, b) => a.time.localeCompare(b.time));
+  const nextPlan = todayPlans.find((plan) => !plan.done) || todayPlans.at(-1);
+  const status = state.liveSession.status === "running" ? "In deep work" : state.liveSession.status === "paused" ? "Paused—return when ready." : "Ready when you are.";
+  els.focusDeckSubject.textContent = nextPlan?.subject || "Your next task";
+  els.focusDeckTask.textContent = nextPlan?.task || "Choose one clear action and begin.";
+  els.focusDeckTimer.textContent = formatClock(getLiveStudyMs());
+  els.focusDeckStatus.textContent = status;
+  els.focusDeckStartBtn.disabled = state.liveSession.status === "running";
+  els.focusDeckStartBtn.textContent = state.liveSession.status === "paused" ? "Resume Timer" : "Start Timer";
+  els.focusDeckPauseBtn.disabled = state.liveSession.status !== "running";
 }
 
 function getLiveStudyMs(now = Date.now()) {
@@ -1396,6 +1446,15 @@ function renderWeeklyReport() {
       <strong>${value}</strong>
     </div>
   `).join("");
+  if (els.weeklyReportAction) {
+    els.weeklyReportAction.textContent = consistency < 50
+      ? "Recommendation: protect one non-negotiable study block each day next week."
+      : completion < 70
+        ? "Recommendation: reduce tomorrow’s plan slightly and finish every listed task."
+        : weakResolved === 0
+          ? "Recommendation: turn one repeated weak area into a revision task this week."
+          : "Recommendation: you are building steady momentum—keep the same rhythm next week.";
+  }
 }
 
 function normalizeSubjectName(subject = "") {
@@ -1779,6 +1838,32 @@ function renderMotivation() {
   els.focusStatus.textContent = focusedToday
     ? "Nice. Your focused day is counted."
     : "Mark it after one real focused study block.";
+  renderConsistencyHeatmap();
+}
+
+function renderConsistencyHeatmap() {
+  if (!els.consistencyHeatmap || !els.consistencySummary) return;
+  const days = Array.from({ length: 28 }, (_, index) => todayKey(index - 27));
+  const activeDays = days.filter((date) => isActiveStudyDay(date));
+  els.consistencySummary.textContent = `${activeDays.length}/28 active days`;
+  els.consistencyHeatmap.innerHTML = days.map((date) => {
+    const level = getActivityLevel(date);
+    const label = new Date(`${date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+    return `<span class="heat-day level-${level}" title="${label}: ${level ? "study activity" : "rest day"}" aria-label="${label}: ${level ? "study activity" : "rest day"}"></span>`;
+  }).join("");
+}
+
+function isActiveStudyDay(date) {
+  return getActivityLevel(date) > 0;
+}
+
+function getActivityLevel(date) {
+  const hours = getHoursForDate(date);
+  const completedPlans = state.timetable.filter((plan) => plan.date === date && plan.done && !plan.canceled).length;
+  const completedGoals = state.goals.filter((goal) => goal.date === date && goal.done).length;
+  const focused = state.focusDays.includes(date);
+  const points = hours + (completedPlans * 0.75) + (completedGoals * 0.5) + (focused ? 1 : 0);
+  return points >= 5 ? 4 : points >= 3 ? 3 : points >= 1.5 ? 2 : points > 0 ? 1 : 0;
 }
 
 function renderSyllabus() {
@@ -1885,6 +1970,26 @@ function startLiveSession() {
   renderStats();
 }
 
+function enterFocusMode() {
+  document.body.classList.add("focus-mode");
+  els.focusDeck?.classList.remove("hidden");
+  renderFocusDeck();
+  els.focusDeck?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function exitFocusMode() {
+  document.body.classList.remove("focus-mode");
+  els.focusDeck?.classList.add("hidden");
+}
+
+function triggerDailyCelebrationIfReady() {
+  const todayPlans = state.timetable.filter((plan) => plan.date === todayKey() && !plan.archived && !plan.canceled);
+  if (!todayPlans.length || !todayPlans.every((plan) => plan.done) || state.celebratedDates.includes(todayKey())) return;
+  state.celebratedDates.push(todayKey());
+  saveState();
+  els.celebration?.classList.remove("hidden");
+}
+
 function pauseLiveSession() {
   if (state.liveSession.status !== "running") return;
   const now = new Date().toISOString();
@@ -1954,6 +2059,15 @@ els.examDate.addEventListener("change", () => {
 });
 
 els.startSessionBtn?.addEventListener("click", startLiveSession);
+els.focusModeBtn?.addEventListener("click", enterFocusMode);
+els.priorityFocusBtn?.addEventListener("click", enterFocusMode);
+els.exitFocusModeBtn?.addEventListener("click", exitFocusMode);
+els.focusDeckStartBtn?.addEventListener("click", () => {
+  if (state.liveSession.status === "paused") resumeLiveSession();
+  else startLiveSession();
+});
+els.focusDeckPauseBtn?.addEventListener("click", pauseLiveSession);
+els.celebrationCloseBtn?.addEventListener("click", () => els.celebration?.classList.add("hidden"));
 els.pauseSessionBtn?.addEventListener("click", pauseLiveSession);
 els.resumeSessionBtn?.addEventListener("click", resumeLiveSession);
 els.pauseModal?.addEventListener("click", (event) => {
@@ -2436,6 +2550,7 @@ els.timetableList.addEventListener("click", async (event) => {
   if (toggleId) {
     state.timetable = state.timetable.map((plan) => plan.id === toggleId && !plan.canceled ? { ...plan, done: event.target.checked } : plan);
     render();
+    triggerDailyCelebrationIfReady();
     scheduleStudyNotifications();
     return;
   }
