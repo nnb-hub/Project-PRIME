@@ -2789,3 +2789,71 @@ body.dark-mode .revision-item::before { color: var(--green); background: rgba(56
 body.dark-mode .plan-subject-icon { color: var(--blue); background: rgba(88, 166, 255, .14); }
 body.dark-mode .plan-subject-icon[data-plan-subject="Chemistry"] { color: var(--amber); background: rgba(255, 209, 102, .13); }
 body.dark-mode .plan-subject-icon[data-plan-subject="Botany"], body.dark-mode .plan-subject-icon[data-plan-subject="Zoology"] { color: var(--green); background: rgba(56, 215, 182, .13); }
+
+/* Timetable clarity: never allow blue text on a blue button. */
+body:not(.dark-mode) button.secondary-button,
+body:not(.dark-mode) button.text-button,
+body:not(.dark-mode) button.history-toggle,
+body:not(.dark-mode) .segmented-control button:not(.active) {
+  color: var(--blue);
+  background: var(--soft);
+  box-shadow: none;
+}
+body:not(.dark-mode) button.secondary-button:hover,
+body:not(.dark-mode) button.text-button:hover,
+body:not(.dark-mode) button.history-toggle:hover { color: #fff; background: var(--blue); }
+
+body:not(.dark-mode) .timetable-list { display: grid; gap: 12px; }
+body:not(.dark-mode) .day-group { border: 1px solid var(--line); background: #fff; }
+body:not(.dark-mode) .day-title { padding: 13px 16px; border-bottom: 1px solid var(--line); }
+body:not(.dark-mode) .plan-row,
+body:not(.dark-mode) .plan-row.done,
+body:not(.dark-mode) .plan-row.late,
+body:not(.dark-mode) .plan-row.missed,
+body:not(.dark-mode) .plan-row.canceled {
+  min-height: 104px;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-left: 4px solid #5b8cff;
+  background: #fff;
+}
+body:not(.dark-mode) .plan-row.done { border-left-color: #10a978; }
+body:not(.dark-mode) .plan-row.late { border-left-color: #e59a29; }
+body:not(.dark-mode) .plan-row.missed,
+body:not(.dark-mode) .plan-row.canceled { border-left-color: #d15c73; }
+body:not(.dark-mode) .plan-row:last-child { border-bottom: 0; }
+body:not(.dark-mode) .plan-row .plan-task { color: var(--ink); font-size: 1.05rem; }
+body:not(.dark-mode) .plan-row.done .plan-task { color: #536176; text-decoration-color: #10a978; }
+body:not(.dark-mode) .plan-row time { color: var(--ink); font-size: .95rem; font-weight: 900; }
+body:not(.dark-mode) .plan-row small { color: var(--muted); font-weight: 700; }
+.plan-subject-icon { width: 48px; height: 48px; border-radius: 14px; font-size: 1.45rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.6); }
+.plan-check { width: 40px; height: 40px; }
+body:not(.dark-mode) .plan-actions { margin-top: 2px; }
+body:not(.dark-mode) .plan-actions button { min-height: 32px; padding: 6px 10px; border-radius: 8px; }
+
+/* Same dashboard layout in dark mode, with its own readable contrast. */
+body.dark-mode .mission-sidebar { inset: 0 auto 0 0; width: 278px; padding: 22px 14px; border: 0; border-right: 1px solid var(--line); border-radius: 0; background: #0b1728; box-shadow: none; }
+body.dark-mode .sidebar-brand { padding: 6px 8px 18px; }
+body.dark-mode .sidebar-logo { width: 42px; height: 42px; border: 0; border-radius: 13px; }
+body.dark-mode .sidebar-toggle { align-self: end; margin: -56px 4px 22px; padding: 8px; border: 0; border-radius: 8px; background: rgba(88,166,255,.13); color: var(--blue); }
+body.dark-mode .sidebar-nav { gap: 4px; }
+body.dark-mode .sidebar-nav a { min-height: 44px; padding: 10px 12px; border-radius: 10px; }
+body.dark-mode .sidebar-nav a:hover, body.dark-mode .sidebar-nav a:first-child { color: #fff; border-color: transparent; background: linear-gradient(135deg, #2867f6, #6840dd); }
+body.dark-mode .app-shell { width: min(1440px, calc(100% - 330px)); margin-left: 306px; margin-right: 24px; padding-top: 20px; }
+body.dark-mode.sidebar-collapsed .mission-sidebar { width: 82px; }
+body.dark-mode.sidebar-collapsed .app-shell { width: min(1440px, calc(100% - 132px)); margin-left: 106px; }
+body.dark-mode .hero { min-height: 265px; padding: 30px; border: 0; background: linear-gradient(112deg, #0d3e9e 0%, #1c55c9 55%, #502d9d 100%); }
+body.dark-mode .stats-grid article, body.dark-mode .panel, body.dark-mode .day-group { border-color: var(--line); border-radius: 16px; }
+body.dark-mode .timetable-list { display: grid; gap: 12px; }
+body.dark-mode .day-title { padding: 13px 16px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.035); }
+body.dark-mode .plan-row, body.dark-mode .plan-row.done, body.dark-mode .plan-row.late, body.dark-mode .plan-row.missed, body.dark-mode .plan-row.canceled { min-height: 104px; border: 0; border-bottom: 1px solid var(--line); border-left: 4px solid #5b8cff; background: #101e33; }
+body.dark-mode .plan-row.done { border-left-color: #38d7b6; background: #102d2b; }
+body.dark-mode .plan-row.late { border-left-color: #ffd166; background: #31291c; }
+body.dark-mode .plan-row.missed, body.dark-mode .plan-row.canceled { border-left-color: #ff6b8a; background: #301b27; }
+body.dark-mode .plan-row:last-child { border-bottom: 0; }
+body.dark-mode .plan-row .plan-task, body.dark-mode .plan-row time { color: #f7fbff; }
+body.dark-mode .plan-row small { color: #aebed2; }
+body.dark-mode .plan-actions button { min-height: 32px; padding: 6px 10px; border-radius: 8px; }
+@media (max-width: 1100px) { body.dark-mode .mission-sidebar { width: 82px; } body.dark-mode .app-shell { width: min(1180px, calc(100% - 132px)); margin-left: 106px; } body.dark-mode .sidebar-brand div, body.dark-mode .sidebar-nav span { display: none; } }
+@media (max-width: 760px) { body.dark-mode .app-shell { width: min(100% - 20px, 1180px); margin: 0 auto; padding-top: 12px; } }

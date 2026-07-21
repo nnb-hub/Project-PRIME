@@ -1531,12 +1531,12 @@ function renderTimetable() {
 
 function getPlanIcon(subject) {
   return {
-    Physics: "⌁",
+    Physics: "⚛",
     Chemistry: "⚗",
-    Botany: "⌘",
-    Zoology: "◉",
+    Botany: "🌿",
+    Zoology: "🧬",
     Revision: "↻",
-    "Mock Test": "✦"
+    "Mock Test": "📝"
   }[subject] || "•";
 }
 
