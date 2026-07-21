@@ -2873,3 +2873,93 @@ body.dark-mode .subject-card { border-color: var(--line); background: #101e33; }
 body.dark-mode .subject-progress-row { border-color: var(--line); background: rgba(255,255,255,.025); }
 body.dark-mode .subject-stepper > strong { color: var(--ink); background: #0b1728; }
 body.dark-mode .subject-total-button { color: #fff; background: #2765f7; }
+
+/* Light-mode timetable: a fuller, visual daily schedule board. */
+body:not(.dark-mode) .planner-grid .wide-panel {
+  position: relative;
+  overflow: hidden;
+  border: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+}
+body:not(.dark-mode) .planner-grid .wide-panel::before {
+  content: "";
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  right: -140px;
+  top: -150px;
+  border: 42px solid rgba(39, 101, 247, .06);
+  border-radius: 50%;
+  pointer-events: none;
+}
+body:not(.dark-mode) .planner-grid .wide-panel > * { position: relative; z-index: 1; }
+body:not(.dark-mode) .planner-grid .wide-panel .panel-header::before {
+  content: "▣";
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin-right: 10px;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(135deg, #2765f7, #6a3ee3);
+  font-size: 1.2rem;
+  box-shadow: 0 8px 18px rgba(39, 101, 247, .2);
+}
+body:not(.dark-mode) .planner-grid .wide-panel .panel-header { align-items: center; }
+body:not(.dark-mode) .planner-grid .wide-panel .panel-header > div:first-child { flex: 1; }
+body:not(.dark-mode) .view-date-row {
+  margin-top: 16px;
+  padding: 10px;
+  border: 1px solid #dfe7f7;
+  border-radius: 12px;
+  background: #f4f7ff;
+}
+body:not(.dark-mode) .view-date-row label { color: #53637d; font-weight: 850; }
+body:not(.dark-mode) .view-date-row input { border-color: #d8e2f3; background: #fff; }
+body:not(.dark-mode) .daily-summary {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  padding: 14px 0 6px;
+}
+body:not(.dark-mode) .daily-summary .summary-chip {
+  position: relative;
+  overflow: hidden;
+  min-height: 78px;
+  padding: 13px 11px;
+  border: 1px solid #e1e8f5;
+  border-radius: 12px;
+  background: #fff;
+}
+body:not(.dark-mode) .daily-summary .summary-chip::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 3px;
+  background: #5b8cff;
+}
+body:not(.dark-mode) .daily-summary .summary-chip:nth-child(2)::before { background: #10a978; }
+body:not(.dark-mode) .daily-summary .summary-chip:nth-child(3)::before { background: #e59a29; }
+body:not(.dark-mode) .daily-summary .summary-chip:nth-child(4)::before { background: #d15c73; }
+body:not(.dark-mode) .daily-summary .summary-chip:nth-child(5)::before { background: #8656dc; }
+body:not(.dark-mode) .daily-summary .summary-chip strong { color: var(--ink); font-size: 1.3rem; }
+body:not(.dark-mode) .timetable-form {
+  align-items: end;
+  margin: 12px 0 16px;
+  padding: 13px;
+  border: 1px solid #dce7fb;
+  border-radius: 14px;
+  background: linear-gradient(110deg, #eff5ff, #f9fbff);
+  box-shadow: none;
+}
+body:not(.dark-mode) .timetable-form input,
+body:not(.dark-mode) .timetable-form select { min-height: 43px; border-color: #d8e2f3; background: #fff; }
+body:not(.dark-mode) .timetable-form button[type="submit"] { min-height: 43px; padding-inline: 18px; }
+body:not(.dark-mode) .timetable-list { padding: 4px 0 0; }
+body:not(.dark-mode) .day-title { padding: 14px 16px; background: linear-gradient(90deg, #f2f6ff, #fff); }
+body:not(.dark-mode) .day-title span::before { content: "●"; margin-right: 8px; color: #2765f7; font-size: .7rem; vertical-align: 1px; }
+body:not(.dark-mode) .plan-row { transition: transform .18s ease, box-shadow .18s ease; }
+body:not(.dark-mode) .plan-row:hover { position: relative; z-index: 2; transform: translateX(3px); box-shadow: 0 8px 18px rgba(37, 72, 135, .08); }
+body:not(.dark-mode) .plan-row .pill { border: 0; box-shadow: none; }
+@media (max-width: 900px) { body:not(.dark-mode) .daily-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
