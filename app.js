@@ -847,7 +847,9 @@ function renderStats() {
     .filter((session) => session.date === today && !session.canceled)
     .reduce((sum, session) => sum + Number(session.hours), 0);
   const todayStudyMs = loggedTodayHours * 3600000 + getLiveStudyMs();
-  const todayBreakMs = getLiveBreakMs();
+  // "Break Time Today" is a timetable metric: it starts only after the
+  // user presses a Break button for one of today's timetable entries.
+  const todayBreakMs = getTimetableBreakMs(today);
   const todayHours = todayStudyMs / 3600000;
 
   const weekHours = state.sessions
@@ -981,6 +983,20 @@ function getLiveBreakMs(now = Date.now()) {
     return session.breakMs + Math.max(0, now - breakStartedAt);
   }
   return session.breakMs;
+}
+
+function getTimetableBreakMs(date = todayKey(), now = Date.now()) {
+  return state.timetable
+    .filter((plan) => plan.date === date && !plan.archived && !plan.canceled)
+    .flatMap((plan) => Array.isArray(plan.breaks) ? plan.breaks : [])
+    .reduce((total, planBreak) => {
+      const startedAt = Date.parse(planBreak.startedAt);
+      if (!Number.isFinite(startedAt)) return total;
+
+      const endedAt = Date.parse(planBreak.endedAt);
+      const finishAt = Number.isFinite(endedAt) ? endedAt : now;
+      return total + Math.max(0, finishAt - startedAt);
+    }, 0);
 }
 
 function formatClock(ms) {
