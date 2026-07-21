@@ -2773,3 +2773,19 @@ body:not(.dark-mode) .stats-grid { gap:12px; } body:not(.dark-mode) .stats-grid 
 
 body:not(.dark-mode) .planner-grid .wide-panel { padding:22px; } body:not(.dark-mode) .daily-summary { gap:8px; } body:not(.dark-mode) .summary-chip { border-radius:10px; box-shadow:none; } body:not(.dark-mode) .day-group { overflow:hidden; border-radius:14px; } body:not(.dark-mode) .day-title { color:var(--ink); background:#f8faff; } body:not(.dark-mode) .plan-row { grid-template-columns:auto auto minmax(0,1fr); grid-template-areas:"check icon main" "check icon actions"; gap:12px; padding:14px 16px; }.plan-subject-icon { grid-area:icon; display:grid; place-items:center; width:36px; height:36px; margin-top:1px; border-radius:10px; color:var(--blue); background:var(--soft); font-size:1.15rem; font-weight:900; }.plan-subject-icon[data-plan-subject="Chemistry"] { color:#d97611; background:#fff4df; }.plan-subject-icon[data-plan-subject="Botany"],.plan-subject-icon[data-plan-subject="Zoology"] { color:var(--green-dark); background:#e9faf4; }.plan-subject-icon[data-plan-subject="Mock Test"] { color:#7a42d6; background:#f2eaff; }body:not(.dark-mode) .plan-check { border:0; background:#f4f7fb; } body:not(.dark-mode) .plan-state { color:var(--blue); border:0; background:var(--soft); } body:not(.dark-mode) .plan-actions button { font-size:.76rem; }
 @media (max-width:1100px) { body:not(.dark-mode) .mission-sidebar { width:82px; } body:not(.dark-mode) .app-shell { width:min(1180px,calc(100% - 132px)); margin-left:106px; } body:not(.dark-mode) .sidebar-brand div,body:not(.dark-mode) .sidebar-nav span { display:none; } } @media (max-width:760px) { .app-topbar { min-height:54px; margin-bottom:12px; padding:0 12px; }.topbar-status span { display:none; }body:not(.dark-mode) .app-shell { width:min(100% - 20px,1180px); margin:0 auto; padding-top:12px; }body:not(.dark-mode) .hero { min-height:auto; padding:22px; }body:not(.dark-mode) .hero::after { display:none; } }
+
+/* Keep hero text readable and give revision the same icon language as the timetable. */
+.hero > * { position: relative; z-index: 1; }
+body:not(.dark-mode) .hero::after { z-index: 0; pointer-events: none; }
+.revision-item::before { content: "↻"; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: var(--blue); background: var(--soft); font-size: 1.15rem; font-weight: 900; }
+.revision-item { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+body.dark-mode .app-topbar { border-color: var(--line); background: rgba(12, 26, 46, .88); box-shadow: var(--shadow); }
+body.dark-mode .topbar-location strong { color: var(--ink); }
+body.dark-mode .topbar-status { background: rgba(88, 166, 255, .12); }
+body.dark-mode .topbar-status strong { color: var(--blue); }
+body.dark-mode .topbar-dot { background: var(--green); }
+body.dark-mode .hero { border-radius: 18px; overflow: hidden; }
+body.dark-mode .revision-item::before { color: var(--green); background: rgba(56, 215, 182, .13); }
+body.dark-mode .plan-subject-icon { color: var(--blue); background: rgba(88, 166, 255, .14); }
+body.dark-mode .plan-subject-icon[data-plan-subject="Chemistry"] { color: var(--amber); background: rgba(255, 209, 102, .13); }
+body.dark-mode .plan-subject-icon[data-plan-subject="Botany"], body.dark-mode .plan-subject-icon[data-plan-subject="Zoology"] { color: var(--green); background: rgba(56, 215, 182, .13); }

@@ -231,6 +231,7 @@ const els = {
   doctorPathNoteInput: document.querySelector("#doctorPathNoteInput"),
   doctorPathNote: document.querySelector("#doctorPathNote"),
   dailyLine: document.querySelector("#dailyLine"),
+  topbarMotivation: document.querySelector("#topbarMotivation"),
   consistencyHeatmap: document.querySelector("#consistencyHeatmap"),
   consistencySummary: document.querySelector("#consistencySummary"),
   goalForm: document.querySelector("#goalForm"),
@@ -2000,6 +2001,7 @@ function renderMotivation() {
   const quoteIndex = new Date(todayKey()).getDate() % motivationQuotes.length;
   const focusedToday = state.focusDays.includes(todayKey());
   els.dailyLine.textContent = motivationQuotes[quoteIndex];
+  if (els.topbarMotivation) els.topbarMotivation.textContent = motivationQuotes[quoteIndex];
   els.motivationQuote.textContent = motivationQuotes[quoteIndex];
   els.focusDoneBtn.disabled = focusedToday;
   els.focusDoneBtn.textContent = focusedToday ? "Today Marked" : "Mark Today Focused";
